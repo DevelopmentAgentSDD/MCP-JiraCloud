@@ -1,0 +1,26 @@
+{
+  "project": "opencode-jira-mcp",
+  "projectType": "mcp-server",
+  "stack": {
+    "language": "TypeScript",
+    "runtime": "Node.js",
+    "sdk": "@modelcontextprotocol/sdk",
+    "integration": "Jira Cloud API",
+    "packageManager": "npm"
+  },
+  "createdAt": "2026-06-13T00:00:00Z",
+  "updatedAt": "2026-06-13T19:52:19Z",
+  "humanInTheLoop": true,
+  "currentPhase": "scaffold",
+  "phases": {
+    "analysis":   { "status": "completed", "approved": true, "startedAt": "2026-06-13T00:00:00Z", "completedAt": "2026-06-13T00:00:00Z", "approvedAt": "2026-06-13T00:00:00Z" },
+    "architect":  { "status": "completed", "approved": true, "startedAt": "2026-06-13T00:00:00Z", "completedAt": "2026-06-13T14:28:00Z", "approvedAt": "2026-06-13T14:35:00Z" },
+    "design":     { "status": "completed", "approved": true, "startedAt": "2026-06-13T14:35:00Z", "completedAt": "2026-06-13T19:52:19Z", "approvedAt": "2026-06-13T19:52:19Z" },
+    "scaffold":   { "status": "in_progress", "approved": false, "startedAt": "2026-06-13T19:52:19Z" },
+    "develop":    { "status": "pending", "approved": false },
+    "test":       { "status": "pending", "approved": false },
+    "quality":    { "status": "pending", "approved": false },
+    "deploy":     { "status": "pending", "approved": false }
+  },
+  "features": []
+}
