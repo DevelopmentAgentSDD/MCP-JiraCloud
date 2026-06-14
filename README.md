@@ -1,221 +1,271 @@
-# Harness Engineering — Plantilla para Microservicios .NET Core
+# opencode-jira-mcp
 
-Plantilla de ingenieria de arneses con opencode que orquesta el ciclo de vida completo de microservicios .NET Core mediante agentes especializados.
+MCP (Model Context Protocol) server that connects opencode with Jira Cloud, exposing issue tracking, project management, and agile features as structured tools for AI agents.
 
-## Requisitos previos
+[![npm version](https://img.shields.io/npm/v/opencode-jira-mcp)](https://www.npmjs.com/package/opencode-jira-mcp)
+[![CI](https://github.com/idsanchezf/opencode-jira-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/idsanchezf/opencode-jira-mcp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-- [opencode](https://opencode.ai) instalado
-- .NET SDK (ultima version LTS)
-- Docker Desktop (opcional, para contenerizacion)
-- Git
+---
 
-## Inicio rapido
+## Requirements
 
-### 1. Clona o copia esta plantilla en tu proyecto
+- **Node.js >= 18**
+- A **Jira Cloud** account with an API token
+- An MCP client (such as [opencode](https://opencode.ai), Claude Desktop, or any MCP-compatible host)
 
-```powershell
-cp -Recurse C:\@idsanchezf\harness-engineering\* .\mi-microservicio\
-cd .\mi-microservicio
+## Installation
+
+### Global install (recommended)
+
+```bash
+npm install -g opencode-jira-mcp
 ```
 
-### 2. Inicia opencode en el directorio
+### Using npx (no install)
 
-```powershell
-opencode
+```bash
+npx opencode-jira-mcp
 ```
 
-El agente lider `leader` se activa automaticamente como agente por defecto. Al iniciar:
+### From source
 
-- Lee `.harness-state.json` para conocer el estado del proyecto
-- Si el archivo no existe, lo crea e inicia en fase `analysis`
-- Si existe, retoma desde la fase/feature donde se quedo
-
-### 3. Comienza con una solicitud
-
-Escribe en lenguaje natural lo que necesitas:
-
-```
-Crear un microservicio de gestion de pedidos para un e-commerce
+```bash
+git clone https://github.com/idsanchezf/opencode-jira-mcp.git
+cd opencode-jira-mcp
+npm ci
+npm run build
 ```
 
-El lider evaluara la solicitud y delegara al subagente correspondiente.
+## Configuration
 
-## Agentes disponibles
+The server requires **three environment variables**:
 
-| Agente | Invocacion directa | Fase |
-|--------|-------------------|------|
-| `leader` | default (automatico) | Orquestacion |
-| `features` | Gestion de backlog, ramas y estado | Transversal |
-| `analysis` | DDD, event storming, requerimientos | 1 |
-| `architect` | Definicion de `architecture.md` (ADR, C4) | 2a |
-| `design` | Contratos API, modelo de datos, integracion | 2b |
-| `scaffold` | Creacion de solucion .NET y Docker | 3 |
-| `develop` | Implementacion de funcionalidad | 4 |
-| `test` | Pruebas unitarias, integracion, carga | 5 |
-| `quality` | Analisis estatico, seguridad, deuda tecnica | 6 |
-| `deploy` | CI/CD, Kubernetes, observabilidad | 7 |
+| Variable | Description |
+|---|---|
+| `JIRA_HOST` | Your Jira Cloud domain (e.g., `my-company.atlassian.net`) — do **not** include `https://` |
+| `JIRA_EMAIL` | Email address of your Atlassian account |
+| `JIRA_API_TOKEN` | API token generated at [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens) |
 
-### Invocar un subagente directamente
+### Configuring in opencode.json
 
-Si necesitas saltar a una fase especifica:
-
-```
-@analysis necesito analizar el dominio de facturacion electronica
-@develop implementa el endpoint de creacion de facturas
-@test genera pruebas de integracion para el modulo de pagos
-```
-
-### Comandos de gestion de features
-
-El agente `features` gestiona el backlog y el archivo `.harness-state.json`:
-
-```
-@features status                    # Ver estado actual del proyecto
-@features list features             # Listar todas las features
-@features start F001                # Inicia feature + crea rama feature/F001-{slug}
-@features complete F001             # Push + crea PR hacia develop (marca in_review)
-@features merge F001                # Tras aprobacion del PR, mergea y marca done
-
-### Comandos de tareas (checklist)
-
-Cada feature tiene su `tasks.json` en `docs/features/{id}-{slug}/tasks.json`.
-
-@features tasks progress F001         # Barra de progreso por capa
-@features task done F001 T003          # Marcar tarea como completada
-@features task start F001 T004         # Iniciar siguiente tarea
-@features block F002 motivo="..."   # Bloquear feature
-@features phase complete develop    # Marcar fase como completada
-@features phase start test          # Iniciar siguiente fase
-```
-
-## Archivo de estado `.harness-state.json`
-
-Persiste el progreso entre sesiones. Si cierras opencode y vuelves a abrirlo, el lider lee este archivo y retoma exactamente donde quedaste.
+Add the server to your `opencode.json` or MCP client configuration:
 
 ```json
 {
-  "project": "OrderService",
-  "currentPhase": "develop",
-  "phases": {
-    "analysis":  { "status": "completed" },
-    "architect": { "status": "completed" },
-    "design":    { "status": "completed" },
-    "scaffold":  { "status": "completed" },
-    "develop":   { "status": "in_progress" },
-    "test":      { "status": "pending" },
-    "quality":   { "status": "pending" },
-    "deploy":    { "status": "pending" }
-  },
-  "features": [
-    { "id": "F001", "name": "Crear pedido", "status": "done" },
-    { "id": "F002", "name": "Cancelar pedido", "status": "in_progress" },
-    { "id": "F003", "name": "Consultar estado", "status": "pending" }
-  ]
+  "mcpServers": {
+    "jira": {
+      "command": "npx",
+      "args": ["opencode-jira-mcp"],
+      "env": {
+        "JIRA_HOST": "my-company.atlassian.net",
+        "JIRA_EMAIL": "me@my-company.com",
+        "JIRA_API_TOKEN": "your-api-token-here"
+      }
+    }
+  }
 }
 ```
 
-## Flujo de trabajo tipico
+## Available Tools
 
-```
-1. "Crear un microservicio de catalogo de productos"
-   └─ leader -> analysis  (DDD, bounded contexts, eventos de dominio)
+The server exposes **9 tools** to the MCP host:
 
-2. (analysis completa)
-   └─ leader -> architect (docs/architecture.md, ADR, diagramas C4)
+### 1. `search_issues`
 
-3. (architect completa)
-   └─ leader -> design    (contratos REST, modelo ER, patrones integracion)
+Search for issues in Jira using structured parameters or raw JQL.
 
-4. (design completa)
-   └─ leader -> scaffold  (dotnet new, Dockerfile, docker-compose)
-
-5. "Agregar feature: busqueda de productos por categoria"
-   └─ leader -> features  (crea rama feature/F004-busqueda-productos)
-   └─ leader -> develop   (handler MediatR, endpoint, repositorio EF Core, TDD)
-
-6. "Probar la feature F001"
-   └─ leader -> test      (xUnit, WebApplicationFactory, TestContainers)
-
-7. "Revisar calidad del codigo"
-   └─ leader -> quality   (Roslyn analyzers, OWASP, cobertura)
-
-8. "Preparar despliegue en AKS"
-   └─ leader -> deploy    (CI/CD pipeline, Helm charts, health checks)
+```text
+"Find all high-priority bugs in the PROJ project assigned to me"
+"Search for issues containing 'login' in the summary or description"
 ```
 
-## Estructura generada por `scaffold`
+**Parameters:** `projectKey`, `issueType`, `status`, `assignee`, `priority`, `labels`, `sprint`, `text`, `jql`, `startAt`, `maxResults`, `orderBy`, `fields`
 
-```
-mi-microservicio/
-├── .harness-state.json
-├── src/
-│   ├── OrderService.Api/
-│   ├── OrderService.Application/
-│   ├── OrderService.Domain/
-│   ├── OrderService.Infrastructure/
-│   └── OrderService.Contracts/
-├── tests/
-│   ├── OrderService.UnitTests/
-│   ├── OrderService.IntegrationTests/
-│   └── OrderService.ContractTests/
-├── docs/
-│   ├── analysis/                           # Artefactos globales del proyecto
-│   │   ├── domain-model.md
-│   │   └── business-rules.md
-│   ├── architecture.md                     # ADRs, C4, stack global
-│   └── features/                           # Una carpeta por feature
-│       ├── F001-registro-usuarios-oauth2/
-│       │   ├── analysis.md
-│       │   ├── api-contract.yaml
-│       │   ├── data-model.md
-│       │   └── tasks.json
-│       └── F002-gestion-ordenes-compra/
-│           ├── analysis.md
-│           ├── api-contract.yaml
-│           ├── data-model.md
-│           └── tasks.json
-├── docker-compose.yml
-├── Dockerfile
-└── OrderService.sln
+### 2. `create_issue`
+
+Create a new Jira issue of any type (Task, Bug, Story, Epic, Subtask).
+
+```text
+"Create a bug in PROJ: 'Login page crashes on mobile' with priority High"
+"Create an Epic called 'Q2 Platform Migration' in the PROJ project"
 ```
 
-## Stack tecnologico
+**Parameters:** `projectKey`, `summary`, `issueType`, `description`, `priority`, `assignee`, `labels`, `parentKey` (Subtask), `epicName` (Epic)
 
-| Categoria | Tecnologia |
-|-----------|------------|
-| Runtime | .NET (ultima version LTS) |
-| API | ASP.NET Core Minimal API |
-| ORM | Entity Framework Core (ultima version LTS) |
-| BD | PostgreSQL |
-| Cache | Redis |
-| Mensajeria | MassTransit + RabbitMQ |
-| CQRS | MediatR |
-| Validacion | FluentValidation |
-| Pruebas | xUnit + Moq + TestContainers |
-| CI/CD | GitHub Actions / Azure DevOps |
-| Infra | Docker, Kubernetes, Helm |
-| Observabilidad | OpenTelemetry, Serilog, Prometheus |
+### 3. `update_issue`
 
-## Skills disponibles
+Modify fields on an existing Jira issue.
 
-Los skills se activan automaticamente segun el contexto:
+```text
+"Update PROJ-123: change priority to Critical, add label 'security'"
+"Set the assignee of PROJ-456 to unassigned"
+```
 
-| Skill | Se activa cuando |
-|-------|-----------------|
-| `tdd` | Implementacion de nueva funcionalidad (RED-GREEN-REFACTOR) |
-| `bdd` | Definicion de criterios de aceptacion (Gherkin + Reqnroll) |
-| `git-flow` | Gestion de ramas y versionado (feature/*, develop, release/*) |
-| `dotnet-microservice` | Cualquier tarea .NET Core (stack, estructura, patrones) |
+**Parameters:** `issueKey`, `summary`, `description`, `priority`, `labels`, `assignee`, `components`, `customFields`
 
-## Reglas del proceso
+### 4. `transition_issue`
 
-- **Una feature a la vez**: solo una feature puede estar `in_progress`
-- **Una fase a la vez**: no se avanza a la siguiente fase sin completar la actual
-- **Rama por feature**: `@features start` crea automaticamente `feature/{id}-{slug}` desde `develop`
-- **Git Flow**: `feature/*` -> `develop` -> `release/*` -> `main`
-- **TDD obligatorio**: RED -> GREEN -> REFACTOR en cada tarea de implementacion
-- **BDD para aceptacion**: criterios en Gherkin antes de implementar
-- **architecture.md vivo**: cada decision arquitectonica genera un ADR
-- **Checklist de tareas**: generada por `design`, marcada por `develop` al completar cada tarea
-- **Persistencia automatica**: cada cambio de fase, feature, tarea o TDD se guarda en `.harness-state.json`
-- **Resiliencia entre sesiones**: al reabrir opencode se retoma el estado anterior, incluyendo la tarea y el paso TDD exacto
+Move an issue through its workflow or list available transitions.
+
+```text
+"Move PROJ-123 to In Progress"
+"What transitions are available for PROJ-456?"
+"Close PROJ-789 with resolution 'Done'"
+```
+
+**Parameters:** `issueKey`, `transitionName`, `transitionId`, `resolution`, `comment`, `listTransitions`
+
+### 5. `get_sprints`
+
+Retrieve sprints from a Jira board with optional issue details.
+
+```text
+"Show me active sprints on the PROJ Scrum Board"
+"List all sprints on board ID 42, including their issues"
+```
+
+**Parameters:** `boardId`, `boardName`, `state` (`active`|`future`|`closed`), `includeIssues`, `startAt`, `maxResults`
+
+### 6. `assign_user`
+
+Assign or unassign a user to/from an issue.
+
+```text
+"Assign PROJ-123 to John Doe"
+"Unassign PROJ-456"
+```
+
+**Parameters:** `issueKey`, `accountId` (set to `null` or `"unassigned"` to unassign)
+
+### 7. `manage_comments`
+
+List or add comments on a Jira issue.
+
+```text
+"Show all comments on PROJ-123"
+"Add a comment to PROJ-123: 'Fixed in PR #42, ready for review'"
+```
+
+**Parameters:** `action` (`list`|`add`), `issueKey`, `body` (for `add`), `startAt`, `maxResults`
+
+### 8. `attach_file`
+
+Attach a file from the local filesystem to a Jira issue.
+
+```text
+"Attach the file error-screenshot.png to PROJ-123"
+```
+
+**Parameters:** `issueKey`, `filePath` (must exist, be readable, and <10 MB)
+
+### 9. `jira_health_check`
+
+Verify connectivity to Jira Cloud and validate authentication credentials.
+
+```text
+"Check if the Jira connection is working"
+```
+
+**Parameters:** none
+
+## Security
+
+- **Token safety**: the `JIRA_API_TOKEN` is **never** written to stdout, stderr, or error messages. All log entries and error responses redact the token.
+- **Headers sanitization**: `Authorization` headers are replaced with `Basic [REDACTED]` in all logs.
+- **Config sanitization**: when logging the configuration, the token is displayed as `***SET***`.
+- **Token rotation**: generate new tokens at [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens). The server picks up the new token on restart.
+
+## Troubleshooting
+
+### "JIRA_HOST is required"
+
+Set the `JIRA_HOST` environment variable to your Jira Cloud domain without `https://`:
+
+```bash
+export JIRA_HOST=my-company.atlassian.net
+```
+
+### "JIRA_API_TOKEN is required"
+
+Generate an API token at [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens) and set it:
+
+```bash
+export JIRA_API_TOKEN=your-generated-token
+```
+
+### "Authentication failed"
+
+- Verify your email matches the Atlassian account email
+- Ensure the API token is active (not revoked)
+- Check that `JIRA_HOST` is correct and does not include `https://`
+
+### "Access denied"
+
+Your account does not have permission for the requested action. Verify your project permissions in Jira.
+
+### "Rate limit exceeded"
+
+The server automatically retries with exponential backoff (up to 3 retries, max ~210s total). If you consistently hit rate limits, reduce request frequency or check your Jira Cloud plan limits.
+
+## Development
+
+```bash
+# Install dependencies
+npm ci
+
+# Run in development mode (with auto-reload)
+npm run dev
+
+# Type check
+npm run typecheck
+
+# Lint
+npm run lint
+
+# Format
+npm run format
+
+# Run tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Build for production
+npm run build
+```
+
+### Project structure
+
+```
+src/
+  index.ts                  # Entry point (shebang, main function)
+  config/                   # Zod-based env var validation
+  auth/                     # Basic Auth header builder
+  services/                 # JiraClient (HTTP client with retry)
+  tools/                    # 9 MCP tool handlers + centralized registration
+  transport/                # Stdio transport setup
+  types/                    # TypeScript interfaces
+  utils/                    # Errors, retry logic, sanitization
+tests/
+  unit/                     # Unit tests (vitest)
+  integration/              # Integration tests (nock for HTTP mocking)
+  fixtures/                 # Mock Jira responses
+```
+
+### Tech stack
+
+| Category | Technology |
+|---|---|
+| Language | TypeScript 5.5+ (strict mode) |
+| Runtime | Node.js >= 18 |
+| MCP SDK | @modelcontextprotocol/sdk ^1.0 |
+| Validation | Zod ^3.24 |
+| Logging | Pino ^9.0 |
+| Testing | Vitest + nock |
+| Linting | ESLint + Prettier |
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.

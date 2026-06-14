@@ -36,10 +36,7 @@ export interface RetryAttemptResult<T> {
  * @returns El resultado de la funcion si tiene exito
  * @throws El ultimo error si se agotan los reintentos
  */
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions,
-): Promise<T> {
+export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions): Promise<T> {
   let lastError: unknown;
   const logger = options.logger;
 
@@ -87,7 +84,12 @@ function calculateBackoff(
  * Retorna null si el error no es un rate limit.
  */
 function extractRetryAfterMs(error: unknown): number | null {
-  if (error && typeof error === 'object' && 'status' in error && (error as Record<string, unknown>).status === 429) {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'status' in error &&
+    (error as Record<string, unknown>).status === 429
+  ) {
     const ra = (error as Record<string, unknown>).retryAfter;
     if (typeof ra === 'number') return ra;
     return 30_000; // Default 30s

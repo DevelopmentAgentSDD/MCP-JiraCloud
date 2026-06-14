@@ -1,7 +1,7 @@
 import type { Logger } from 'pino';
 import { buildAuthHeader } from '../auth/index.js';
 import { withRetry } from '../utils/retry.js';
-import { mapHttpError, NetworkError, TimeoutError } from '../utils/errors.js';
+import { McpError, mapHttpError, NetworkError, TimeoutError } from '../utils/errors.js';
 import { sanitizeHeaders } from '../utils/sanitize.js';
 import type {
   JiraConfig,
@@ -28,15 +28,25 @@ export class JiraClient {
   constructor(
     public readonly config: JiraConfig,
     private readonly logger: Logger,
+    rateLimitConfig?: Partial<RateLimitConfig>,
   ) {
-    this.rateLimitConfig = DEFAULT_RATE_LIMIT_CONFIG;
+    this.rateLimitConfig = { ...DEFAULT_RATE_LIMIT_CONFIG, ...rateLimitConfig };
   }
 
   /**
    * GET request a Jira API.
    */
-  async get<T>(path: string, query?: Record<string, string | number | boolean | undefined>): Promise<JiraApiResponse<T>> {
-    return this.executeRequest<T>({ method: 'GET', path, query });
+  async get<T>(
+    path: string,
+    query?: Record<string, string | number | boolean | undefined>,
+    options?: { useAgileApi?: boolean },
+  ): Promise<JiraApiResponse<T>> {
+    return this.executeRequest<T>({
+      method: 'GET',
+      path,
+      query,
+      useAgileApi: options?.useAgileApi,
+    });
   }
 
   /**
@@ -132,13 +142,22 @@ export class JiraClient {
             throw new TimeoutError(options.path, timeoutMs);
           }
 
-          if (error instanceof Error && error.name === 'McpError') {
+          if (error instanceof McpError) {
+            throw error;
+          }
+
+          // Propagar el throw de rate limit (429) de mapHttpError para withRetry
+          if (
+            error &&
+            typeof error === 'object' &&
+            'status' in error &&
+            (error as Record<string, unknown>).status === 429
+          ) {
             throw error;
           }
 
           // Error de red
-          const cause =
-            error instanceof Error ? error.message : 'Unknown network error';
+          const cause = error instanceof Error ? error.message : 'Unknown network error';
           throw new NetworkError(this.config.host, cause);
         }
       },

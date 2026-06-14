@@ -29,7 +29,7 @@ export class McpError extends Error {
  * Error de validacion de entrada.
  */
 export class ValidationError extends McpError {
-  constructor(validationErrors: Array<{ path: string; message: string; received?: unknown }>) {
+  constructor(validationErrors: { path: string; message: string; received?: unknown }[]) {
     super(ErrorCodes.INVALID_PARAMS, 'Invalid parameters. Check the input values.', {
       validationErrors,
     });
@@ -101,8 +101,7 @@ export function mapHttpError(
   path: string,
 ): McpError {
   const messages =
-    body.errorMessages?.join('; ') ||
-    (body.errors ? JSON.stringify(body.errors) : 'Unknown error');
+    body.errorMessages?.join('; ') || (body.errors ? JSON.stringify(body.errors) : 'Unknown error');
 
   switch (status) {
     case 401:
@@ -133,8 +132,9 @@ export function mapHttpError(
 /**
  * Extrae el valor Retry-After de la respuesta o headers de error de Jira.
  */
-function extractRetryAfter(
-  _body: { errorMessages?: string[]; errors?: Record<string, string> },
-): number {
+function extractRetryAfter(_body: {
+  errorMessages?: string[];
+  errors?: Record<string, string>;
+}): number {
   return 30_000; // Default 30s si no hay header especifico
 }

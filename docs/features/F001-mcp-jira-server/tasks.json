@@ -1,619 +1,942 @@
-{
-  "featureId": "F001",
-  "featureName": "mcp-jira-server",
-  "description": "MCP Server para Jira Cloud - MVP v1.0.0 con 9 tools, transporte stdio, autenticación Basic Auth, rate limiting y token safety.",
-  "version": "1.0.0",
-  "estimatedTotalHours": 40,
-  "tasks": [
-    {
-      "id": "T001",
-      "layer": "config",
-      "name": "Inicializar proyecto Node.js + TypeScript",
-      "description": "Crear package.json con type: module, tsconfig.json estricto, .gitignore, .env.example, .eslintrc.json, .prettierrc. Instalar dependencias: @modelcontextprotocol/sdk, zod, pino. Instalar devDependencies: typescript, tsx, vitest, eslint, prettier, @types/node.",
-      "files": ["package.json", "tsconfig.json", ".gitignore", ".env.example", ".eslintrc.json", ".prettierrc"],
-      "status": "pending",
-      "dependencies": [],
-      "estimatedHours": 0.5
-    },
-    {
-      "id": "T002",
-      "layer": "types",
-      "name": "Definir tipos del protocolo MCP",
-      "description": "Crear src/types/mcp.ts con interfaces: JsonRpcRequest, JsonRpcResponse, JsonRpcError, ErrorCodes, ToolDefinition, ToolCallResult, ToolCallContent. Todo tipado estricto con TypeScript.",
-      "files": ["src/types/mcp.ts"],
-      "status": "pending",
-      "dependencies": ["T001"],
-      "estimatedHours": 0.5
-    },
-    {
-      "id": "T003",
-      "layer": "types",
-      "name": "Definir tipos de dominio Jira",
-      "description": "Crear src/types/jira.ts con interfaces: Issue, IssueSearchResult, Sprint, SprintSearchResult, JiraUser, JiraComment, CommentListResult, CommentAddResult, JiraTransition, TransitionResult, JiraAttachment, AttachmentResult, CreateIssueResult, UpdateIssueResult, AssignUserResult, HealthCheckResult, JiraConfig, SanitizedConfig, RateLimitConfig, JiraRequestOptions, JiraApiResponse, JiraErrorResponse.",
-      "files": ["src/types/jira.ts"],
-      "status": "pending",
-      "dependencies": ["T001"],
-      "estimatedHours": 1.0
-    },
-    {
-      "id": "T004",
-      "layer": "types",
-      "name": "Crear barrel export de tipos",
-      "description": "Crear src/types/index.ts que re-exporta todos los tipos de mcp.ts y jira.ts.",
-      "files": ["src/types/index.ts"],
-      "status": "pending",
-      "dependencies": ["T002", "T003"],
-      "estimatedHours": 0.25
-    },
-    {
-      "id": "T005",
-      "layer": "config",
-      "name": "Implementar módulo de configuración",
-      "description": "Crear src/config/index.ts con: EnvSchema (Zod) que valida JIRA_HOST, JIRA_EMAIL, JIRA_API_TOKEN; loadConfig() que construye JiraConfig con baseUrl y agileBaseUrl derivados; sanitizeConfig() que oculta el token. Lanzar error descriptivo si faltan variables.",
-      "files": ["src/config/index.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 1.0
-    },
-    {
-      "id": "T006",
-      "layer": "config",
-      "name": "Tests unitarios de configuración",
-      "description": "Crear tests/unit/config/index.test.ts. Probar: carga exitosa de env vars, error cuando falta JIRA_HOST, error cuando falta JIRA_EMAIL, error cuando falta JIRA_API_TOKEN, validación de formato de email, sanitización oculta el token, URLs base se construyen correctamente.",
-      "files": ["tests/unit/config/index.test.ts"],
-      "status": "pending",
-      "dependencies": ["T005"],
-      "estimatedHours": 1.0
-    },
-    {
-      "id": "T007",
-      "layer": "auth",
-      "name": "Implementar módulo de autenticación Basic Auth",
-      "description": "Crear src/auth/index.ts con: buildAuthHeader(email, apiToken) que genera 'Basic base64(email:token)'. Función pura sin efectos secundarios ni acceso a env vars. Tipado estricto.",
-      "files": ["src/auth/index.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 0.5
-    },
-    {
-      "id": "T008",
-      "layer": "auth",
-      "name": "Tests unitarios de autenticación",
-      "description": "Crear tests/unit/auth/index.test.ts. Probar: buildAuthHeader genera header correcto, formato 'Basic {base64}', decodificación base64 produce email:token, manejo de caracteres especiales en email y token.",
-      "files": ["tests/unit/auth/index.test.ts"],
-      "status": "pending",
-      "dependencies": ["T007"],
-      "estimatedHours": 0.75
-    },
-    {
-      "id": "T009",
-      "layer": "utils",
-      "name": "Implementar jerarquía de errores",
-      "description": "Crear src/utils/errors.ts con: McpError base (con code, message, data, toJsonRpcError()), ValidationError (code -32602), JiraAuthError, RateLimitError, NetworkError, TimeoutError. Función mapJiraError(status, body, path) que traduce errores HTTP de Jira a McpError con mensajes accionables.",
-      "files": ["src/utils/errors.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 1.0
-    },
-    {
-      "id": "T010",
-      "layer": "utils",
-      "name": "Tests unitarios de errores",
-      "description": "Crear tests/unit/utils/errors.test.ts. Probar: cada clase de error tiene el código correcto, toJsonRpcError() produce formato válido, mapJiraError para 401, 403, 404, 429, 5xx, 400 con errorMessages, 400 con errors por campo. Mensajes contienen información accionable para el LLM.",
-      "files": ["tests/unit/utils/errors.test.ts"],
-      "status": "pending",
-      "dependencies": ["T009"],
-      "estimatedHours": 1.0
-    },
-    {
-      "id": "T011",
-      "layer": "utils",
-      "name": "Implementar rate limiting con backoff exponencial",
-      "description": "Crear src/utils/retry.ts con: withRetry(fn, options) que ejecuta una función async con hasta maxRetries intentos, backoff exponencial, respeta Retry-After header, logging en cada reintento. Función sleep(ms). Función calculateBackoff(attempt, baseTimeout, error). Máximo 210s en total.",
-      "files": ["src/utils/retry.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 1.5
-    },
-    {
-      "id": "T012",
-      "layer": "utils",
-      "name": "Tests unitarios de rate limiting",
-      "description": "Crear tests/unit/utils/retry.test.ts. Probar: éxito en primer intento, reintento tras fallo, respeta Retry-After (mock timer), máximo 3 reintentos, error tras agotar reintentos, backoff exponencial (30s, 60s, 120s), no reintenta errores 4xx (excepto 429).",
-      "files": ["tests/unit/utils/retry.test.ts"],
-      "status": "pending",
-      "dependencies": ["T011"],
-      "estimatedHours": 1.5
-    },
-    {
-      "id": "T013",
-      "layer": "utils",
-      "name": "Implementar sanitización de datos sensibles",
-      "description": "Crear src/utils/sanitize.ts con: sanitizeHeaders(headers) que reemplaza Authorization por 'Basic [REDACTED]', sanitizeConfig(config) que oculta apiToken, redactToken(text, token) que reemplaza todas las ocurrencias del token en un string. Cada función es pura.",
-      "files": ["src/utils/sanitize.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 0.75
-    },
-    {
-      "id": "T014",
-      "layer": "utils",
-      "name": "Tests unitarios de sanitización",
-      "description": "Crear tests/unit/utils/sanitize.test.ts. Probar: sanitizeHeaders oculta Authorization, sanitizeHeaders preserva otros headers, sanitizeConfig muestra '***SET***' cuando hay token, sanitizeConfig muestra 'NOT SET' cuando no hay, redactToken reemplaza todas las ocurrencias, redactToken con token vacío no modifica el texto.",
-      "files": ["tests/unit/utils/sanitize.test.ts"],
-      "status": "pending",
-      "dependencies": ["T013"],
-      "estimatedHours": 0.75
-    },
-    {
-      "id": "T015",
-      "layer": "services",
-      "name": "Implementar cliente HTTP de Jira (jira-client.ts)",
-      "description": "Crear src/services/jira-client.ts con clase JiraClient. Métodos: get(path, query), post(path, body), put(path, body), delete(path). Internamente: buildUrl (une baseUrl + path + query string), buildHeaders (auth + content-type), fetch nativo con AbortSignal.timeout, integración con withRetry, mapeo de errores HTTP vía mapJiraError, sanitización de headers en logs. Soporte para useAgileApi=true (agileBaseUrl) y isFormData=true (multipart). Logger inyectado.",
-      "files": ["src/services/jira-client.ts"],
-      "status": "pending",
-      "dependencies": ["T007", "T009", "T011", "T013", "T005"],
-      "estimatedHours": 2.5
-    },
-    {
-      "id": "T016",
-      "layer": "services",
-      "name": "Tests unitarios del cliente HTTP",
-      "description": "Crear tests/unit/services/jira-client.test.ts con mock de fetch global. Probar: GET construye URL correcta, POST incluye body JSON, PUT incluye body, headers de auth presentes, header Authorization es 'Basic ...', no incluye token en logs, timeout con AbortSignal, errores 401/403/404/429/500 se traducen a McpError, rate limiting se aplica, isFormData envía FormData, useAgileApi usa agileBaseUrl.",
-      "files": ["tests/unit/services/jira-client.test.ts"],
-      "status": "pending",
-      "dependencies": ["T015"],
-      "estimatedHours": 2.0
-    },
-    {
-      "id": "T017",
-      "layer": "fixtures",
-      "name": "Crear fixtures de respuestas Jira",
-      "description": "Crear archivos JSON en tests/fixtures/jira-responses/: search-issues.json (respuesta exitosa con 3 issues), create-issue.json (respuesta 201), transitions.json (lista de transiciones), sprints.json (lista de sprints), comments.json (lista de comentarios), attachment.json (respuesta de adjunto), myself.json (respuesta health check). Crear carpeta errors/ con: 400-invalid-jql.json, 401-unauthorized.json, 403-forbidden.json, 404-not-found.json, 429-rate-limit.json.",
-      "files": [
-        "tests/fixtures/jira-responses/search-issues.json",
-        "tests/fixtures/jira-responses/create-issue.json",
-        "tests/fixtures/jira-responses/transitions.json",
-        "tests/fixtures/jira-responses/sprints.json",
-        "tests/fixtures/jira-responses/comments.json",
-        "tests/fixtures/jira-responses/attachment.json",
-        "tests/fixtures/jira-responses/myself.json",
-        "tests/fixtures/jira-responses/errors/400-invalid-jql.json",
-        "tests/fixtures/jira-responses/errors/401-unauthorized.json",
-        "tests/fixtures/jira-responses/errors/403-forbidden.json",
-        "tests/fixtures/jira-responses/errors/404-not-found.json",
-        "tests/fixtures/jira-responses/errors/429-rate-limit.json"
-      ],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 1.0
-    },
-    {
-      "id": "T018",
-      "layer": "schemas",
-      "name": "Crear Zod schemas para search_issues",
-      "description": "Crear src/schemas/search-issues.ts con: SearchIssuesInputSchema (jql opcional, projectKey, issueType enum, status, assignee, priority enum, labels array, sprint, text, startAt, maxResults, orderBy, fields), SearchIssuesInput type, SearchIssuesOutputSchema, SearchIssuesOutput type.",
-      "files": ["src/schemas/search-issues.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 0.75
-    },
-    {
-      "id": "T019",
-      "layer": "schemas",
-      "name": "Crear Zod schemas para create_issue",
-      "description": "Crear src/schemas/create-issue.ts con: CreateIssueInputSchema (projectKey, summary, issueType enum con refinamiento: Subtask requiere parentKey, Epic requiere epicName), CreateIssueOutputSchema, tipos inferidos.",
-      "files": ["src/schemas/create-issue.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 0.75
-    },
-    {
-      "id": "T020",
-      "layer": "schemas",
-      "name": "Crear Zod schemas para update_issue",
-      "description": "Crear src/schemas/update-issue.ts con: UpdateIssueInputSchema (issueKey, summary, description, priority, labels, components, customFields), refinamiento: al menos un campo además de issueKey debe estar presente. UpdateIssueOutputSchema. Tipos inferidos.",
-      "files": ["src/schemas/update-issue.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 0.5
-    },
-    {
-      "id": "T021",
-      "layer": "schemas",
-      "name": "Crear Zod schemas para transition_issue",
-      "description": "Crear src/schemas/transition-issue.ts con: TransitionIssueInputSchema (issueKey, transitionName, transitionId, resolution, comment, listTransitions), refinamiento: listTransitions=true o transitionName/transitionId requerido. TransitionIssueOutputSchema con availableTransitions. Tipos inferidos.",
-      "files": ["src/schemas/transition-issue.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 0.5
-    },
-    {
-      "id": "T022",
-      "layer": "schemas",
-      "name": "Crear Zod schemas para get_sprints",
-      "description": "Crear src/schemas/get-sprints.ts con: GetSprintsInputSchema (boardId, boardName, state enum, includeIssues, startAt, maxResults), refinamiento: boardId o boardName requerido. GetSprintsOutputSchema. Tipos inferidos.",
-      "files": ["src/schemas/get-sprints.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 0.5
-    },
-    {
-      "id": "T023",
-      "layer": "schemas",
-      "name": "Crear Zod schemas para assign_user",
-      "description": "Crear src/schemas/assign-user.ts con: AssignUserInputSchema (issueKey, accountId nullable), AssignUserOutputSchema. Tipos inferidos.",
-      "files": ["src/schemas/assign-user.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 0.25
-    },
-    {
-      "id": "T024",
-      "layer": "schemas",
-      "name": "Crear Zod schemas para manage_comments",
-      "description": "Crear src/schemas/manage-comments.ts con: ManageCommentsInputSchema usando discriminatedUnion para 'list' (issueKey, startAt, maxResults) y 'add' (issueKey, body). CommentsListOutputSchema, CommentAddOutputSchema. Tipos inferidos.",
-      "files": ["src/schemas/manage-comments.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 0.75
-    },
-    {
-      "id": "T025",
-      "layer": "schemas",
-      "name": "Crear Zod schemas para attach_file",
-      "description": "Crear src/schemas/attach-file.ts con: AttachFileInputSchema (issueKey, filePath con refinamiento: archivo debe existir, ser legible, <10 MB). AttachFileOutputSchema. Tipos inferidos.",
-      "files": ["src/schemas/attach-file.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 0.5
-    },
-    {
-      "id": "T026",
-      "layer": "schemas",
-      "name": "Crear Zod schemas para health_check",
-      "description": "Crear src/schemas/health-check.ts con: HealthCheckInputSchema (objeto vacío strict), HealthCheckOutputSchema. Tipos inferidos.",
-      "files": ["src/schemas/health-check.ts"],
-      "status": "pending",
-      "dependencies": ["T004"],
-      "estimatedHours": 0.25
-    },
-    {
-      "id": "T027",
-      "layer": "schemas",
-      "name": "Tests unitarios de schemas Zod",
-      "description": "Crear tests/unit/schemas/*.test.ts para cada schema. Probar: datos válidos se aceptan, datos inválidos muestran mensajes de error claros, refinamientos cruzados funcionan (Subtask requiere parentKey, Epic requiere epicName), valores por defecto, enums estrictos, validación de archivo (path inexistente, tamaño excedido), discriminatedUnion de comments.",
-      "files": [
-        "tests/unit/schemas/search-issues.test.ts",
-        "tests/unit/schemas/create-issue.test.ts",
-        "tests/unit/schemas/update-issue.test.ts",
-        "tests/unit/schemas/transition-issue.test.ts",
-        "tests/unit/schemas/get-sprints.test.ts",
-        "tests/unit/schemas/assign-user.test.ts",
-        "tests/unit/schemas/manage-comments.test.ts",
-        "tests/unit/schemas/attach-file.test.ts",
-        "tests/unit/schemas/health-check.test.ts"
-      ],
-      "status": "pending",
-      "dependencies": ["T018", "T019", "T020", "T021", "T022", "T023", "T024", "T025", "T026"],
-      "estimatedHours": 2.0
-    },
-    {
-      "id": "T028",
-      "layer": "tools",
-      "name": "Implementar tool handler: search_issues",
-      "description": "Crear src/tools/search-issues.ts con registerSearchIssues(server, jiraClient). Implementar: buildJql(input) que construye JQL a partir de parámetros estructurados, mapSearchResponse(raw, host) que transforma la respuesta de Jira a IssueSearchResult, defaultFields list. Manejar caso sin resultados (total: 0). Manejar errores vía try/catch → McpError.",
-      "files": ["src/tools/search-issues.ts"],
-      "status": "pending",
-      "dependencies": ["T015", "T018"],
-      "estimatedHours": 2.0
-    },
-    {
-      "id": "T029",
-      "layer": "tools",
-      "name": "Implementar tool handler: create_issue",
-      "description": "Crear src/tools/create-issue.ts con registerCreateIssue(server, jiraClient, config). Implementar: buildCreatePayload(input) que construye el body para POST /rest/api/3/issue, manejo de parentKey para Subtask, epicLink/epicName para Epic, mapeo de priority/assignee a objetos de Jira, transformación de respuesta a CreateIssueResult.",
-      "files": ["src/tools/create-issue.ts"],
-      "status": "pending",
-      "dependencies": ["T015", "T019"],
-      "estimatedHours": 2.0
-    },
-    {
-      "id": "T030",
-      "layer": "tools",
-      "name": "Implementar tool handler: update_issue",
-      "description": "Crear src/tools/update-issue.ts con registerUpdateIssue(server, jiraClient). Implementar: buildUpdatePayload(input) que solo incluye campos presentes, transformación de respuesta 204 No Content a UpdateIssueResult con changedFields, tracking de qué campos se enviaron para actualizar.",
-      "files": ["src/tools/update-issue.ts"],
-      "status": "pending",
-      "dependencies": ["T015", "T020"],
-      "estimatedHours": 1.5
-    },
-    {
-      "id": "T031",
-      "layer": "tools",
-      "name": "Implementar tool handler: transition_issue",
-      "description": "Crear src/tools/transition-issue.ts con registerTransitionIssue(server, jiraClient). Implementar: listTransitions=true → GET /transitions y devolver lista, resolución de transitionName → GET /transitions + búsqueda por nombre, ejecución de transición → POST /transitions con transitionId + resolución + comentario opcional. Manejar ambigüedad (múltiples matches).",
-      "files": ["src/tools/transition-issue.ts"],
-      "status": "pending",
-      "dependencies": ["T015", "T021"],
-      "estimatedHours": 2.5
-    },
-    {
-      "id": "T032",
-      "layer": "tools",
-      "name": "Implementar tool handler: get_sprints",
-      "description": "Crear src/tools/get-sprints.ts con registerGetSprints(server, jiraClient). Implementar: resolución de boardName → GET /rest/agile/1.0/board?name=, consulta de sprints con estado, includeIssues=true → GET /rest/agile/1.0/sprint/{id}/issue. Transformación a SprintSearchResult.",
-      "files": ["src/tools/get-sprints.ts"],
-      "status": "pending",
-      "dependencies": ["T015", "T022"],
-      "estimatedHours": 2.0
-    },
-    {
-      "id": "T033",
-      "layer": "tools",
-      "name": "Implementar tool handler: assign_user",
-      "description": "Crear src/tools/assign-user.ts con registerAssignUser(server, jiraClient). Implementar: accountId null o 'unassigned' → PUT /issue/{key}/assignee con body { accountId: null }, asignar → PUT /issue/{key}/assignee con body { accountId: '...' }, transformación a AssignUserResult.",
-      "files": ["src/tools/assign-user.ts"],
-      "status": "pending",
-      "dependencies": ["T015", "T023"],
-      "estimatedHours": 1.5
-    },
-    {
-      "id": "T034",
-      "layer": "tools",
-      "name": "Implementar tool handler: manage_comments",
-      "description": "Crear src/tools/manage-comments.ts con registerManageComments(server, jiraClient). Implementar: action=list → GET /issue/{key}/comment con paginación, action=add → POST /issue/{key}/comment con body ADF o texto, transformación a CommentListResult / CommentAddResult. Manejar comentario vacío (error Zod).",
-      "files": ["src/tools/manage-comments.ts"],
-      "status": "pending",
-      "dependencies": ["T015", "T024"],
-      "estimatedHours": 1.5
-    },
-    {
-      "id": "T035",
-      "layer": "tools",
-      "name": "Implementar tool handler: attach_file",
-      "description": "Crear src/tools/attach-file.ts con registerAttachFile(server, jiraClient). Implementar: validación pre-handler (existsSync, statSync, tamaño <10MB), lectura del archivo, construcción de FormData con Blob, POST con header X-Atlassian-Token: no-check, transformación a AttachmentResult. Manejar tipos MIME mediante detección por extensión.",
-      "files": ["src/tools/attach-file.ts"],
-      "status": "pending",
-      "dependencies": ["T015", "T025"],
-      "estimatedHours": 2.0
-    },
-    {
-      "id": "T036",
-      "layer": "tools",
-      "name": "Implementar tool handler: health_check",
-      "description": "Crear src/tools/health-check.ts con registerHealthCheck(server, jiraClient, config). Implementar: GET /rest/api/3/myself, transformación a HealthCheckResult con status 'connected'/'error', incluir jiraHost y timestamp. Manejar errores de auth y red con mensajes descriptivos (incluyendo URL para regenerar token).",
-      "files": ["src/tools/health-check.ts"],
-      "status": "pending",
-      "dependencies": ["T015", "T026"],
-      "estimatedHours": 1.0
-    },
-    {
-      "id": "T037",
-      "layer": "tools",
-      "name": "Tests unitarios de tool handlers",
-      "description": "Crear tests/unit/tools/*.test.ts para cada handler. Usar mock de JiraClient (vi.fn()). Probar: llamada exitosa con transformación correcta, errores HTTP se traducen a mensajes accionables, buildJql genera JQL correcto, buildCreatePayload incluye campos opcionales solo si presentes, resolución de transitionName, manejo de boardName → boardId, desasignación con accountId null, discriminatedUnion de comments, validación de archivo. Cada test verifica que la respuesta tiene formato ToolCallResult.",
-      "files": [
-        "tests/unit/tools/search-issues.test.ts",
-        "tests/unit/tools/create-issue.test.ts",
-        "tests/unit/tools/update-issue.test.ts",
-        "tests/unit/tools/transition-issue.test.ts",
-        "tests/unit/tools/get-sprints.test.ts",
-        "tests/unit/tools/assign-user.test.ts",
-        "tests/unit/tools/manage-comments.test.ts",
-        "tests/unit/tools/attach-file.test.ts",
-        "tests/unit/tools/health-check.test.ts"
-      ],
-      "status": "pending",
-      "dependencies": ["T028", "T029", "T030", "T031", "T032", "T033", "T034", "T035", "T036"],
-      "estimatedHours": 4.0
-    },
-    {
-      "id": "T038",
-      "layer": "tools",
-      "name": "Implementar registro centralizado de tools",
-      "description": "Crear src/tools/register.ts con registerAllTools(server, jiraClient, config) que llama a register{Name} de cada tool. Un solo punto de registro para mantener limpio index.ts.",
-      "files": ["src/tools/register.ts"],
-      "status": "pending",
-      "dependencies": ["T028", "T029", "T030", "T031", "T032", "T033", "T034", "T035", "T036"],
-      "estimatedHours": 0.5
-    },
-    {
-      "id": "T039",
-      "layer": "transport",
-      "name": "Implementar transporte stdio server",
-      "description": "Crear src/transport/stdio-server.ts con: createStdioTransport() que instancia StdioServerTransport del SDK, connectTransport(server, transport) que conecta el McpServer al transporte. Manejar errores de conexión y señales de cierre (SIGINT, SIGTERM).",
-      "files": ["src/transport/stdio-server.ts"],
-      "status": "pending",
-      "dependencies": ["T001"],
-      "estimatedHours": 0.75
-    },
-    {
-      "id": "T040",
-      "layer": "server",
-      "name": "Implementar server.ts",
-      "description": "Crear src/server.ts con: createServer(config) que crea McpServer con serverInfo { name: 'opencode-jira-mcp', version: '1.0.0' }, capabilities { tools: {} }. No registra tools (eso lo hace register.ts). Retorna la instancia de McpServer.",
-      "files": ["src/server.ts"],
-      "status": "pending",
-      "dependencies": ["T001"],
-      "estimatedHours": 0.5
-    },
-    {
-      "id": "T041",
-      "layer": "entry",
-      "name": "Implementar entry point (index.ts)",
-      "description": "Crear src/index.ts con: shebang #!/usr/bin/env node. Función main() asíncrona que: 1) loadConfig(), 2) crea logger (pino) a stderr, 3) crea JiraClient, 4) createServer(), 5) registerAllTools(), 6) createStdioTransport(), 7) server.connect(transport). Manejar errores: configuración inválida (log y exit 1), error de conexión (log y exit 1). Señales: SIGINT/SIGTERM → cleanup y exit 0. Log al inicio: 'opencode-jira-mcp v1.0.0 starting, connecting to {host} as {email}'. Shebang al inicio del archivo.",
-      "files": ["src/index.ts"],
-      "status": "pending",
-      "dependencies": ["T005", "T015", "T038", "T039", "T040"],
-      "estimatedHours": 1.5
-    },
-    {
-      "id": "T042",
-      "layer": "integration",
-      "name": "Test de integración: protocolo MCP completo",
-      "description": "Crear tests/integration/mcp-protocol.test.ts. Spawn del proceso MCP Server (node dist/index.js con env vars mock), simular initialize request/response, simular tools/list (verificar 9 tools registradas con nombres y schemas correctos), simular tools/call para search_issues con JiraClient mockeado, verificar JSON-RPC 2.0 válido en stdout y nunca roto por logs. Usar child_process.spawn o stdio simulation.",
-      "files": ["tests/integration/mcp-protocol.test.ts"],
-      "status": "pending",
-      "dependencies": ["T041"],
-      "estimatedHours": 3.0
-    },
-    {
-      "id": "T043",
-      "layer": "integration",
-      "name": "Test de seguridad: token safety",
-      "description": "Crear tests/integration/token-safety.test.ts. Probar: GIVEN el MCP Server con JIRA_API_TOKEN configurado, WHEN ocurre cualquier error (auth, red, validación), THEN stdout NO contiene el token, stderr NO contiene el token, respuesta JSON-RPC de error NO contiene el token. Probar con múltiples escenarios: 401 de Jira, error de validación Zod, error de red. Usar grep sobre stdout/stderr capturados.",
-      "files": ["tests/integration/token-safety.test.ts"],
-      "status": "pending",
-      "dependencies": ["T041"],
-      "estimatedHours": 2.0
-    },
-    {
-      "id": "T044",
-      "layer": "integration",
-      "name": "Test de integración contra Jira real (opcional, CI only)",
-      "description": "Crear tests/integration/jira-api.test.ts. Solo se ejecuta si JIRA_HOST, JIRA_EMAIL, JIRA_API_TOKEN están configurados (skip si no). Probar: health check exitoso contra Jira real, search_issues con JQL simple, create_issue con proyecto real (y cleanup), transiciones disponibles. Marcar con .skip si no hay credenciales. Útil para CI con secrets.",
-      "files": ["tests/integration/jira-api.test.ts"],
-      "status": "pending",
-      "dependencies": ["T041"],
-      "estimatedHours": 1.5
-    },
-    {
-      "id": "T045",
-      "layer": "ci",
-      "name": "Configurar CI/CD con GitHub Actions",
-      "description": "Crear .github/workflows/ci.yml con: build (npm ci, npm run build), lint (npm run lint), test (npm test con coverage), audit (npm audit --production). Correr en push a main y PRs. Matrix: Node.js 18, 20, 22. Publicar a npm en release (workflow_dispatch con tag). Incluir vitest coverage report como artifact.",
-      "files": [".github/workflows/ci.yml"],
-      "status": "pending",
-      "dependencies": ["T041"],
-      "estimatedHours": 1.0
-    },
-    {
-      "id": "T046",
-      "layer": "docs",
-      "name": "Escribir README.md",
-      "description": "Crear README.md con: descripción del proyecto, badges (npm version, CI status), quick start (instalación, 3 env vars, configuración en opencode.json), ejemplos de uso para cada una de las 9 tools (prompt del usuario + respuesta del agente), security notes (token nunca en logs, rotación), troubleshooting (errores comunes y soluciones), development guide (cómo contribuir, scripts npm, estructura del proyecto), license.",
-      "files": ["README.md"],
-      "status": "pending",
-      "dependencies": ["T041"],
-      "estimatedHours": 2.0
-    },
-    {
-      "id": "T047",
-      "layer": "quality",
-      "name": "Configurar ESLint + Prettier y ejecutar fixes",
-      "description": "Verificar que .eslintrc.json y .prettierrc están configurados. Ejecutar npm run lint:fix y npm run format sobre todo el código fuente. Asegurar que el CI rompe si hay errores de linting.",
-      "files": [".eslintrc.json", ".prettierrc"],
-      "status": "pending",
-      "dependencies": ["T045"],
-      "estimatedHours": 0.5
-    },
-    {
-      "id": "T048",
-      "layer": "quality",
-      "name": "Build final y verificación de artifact",
-      "description": "Ejecutar npm run build (tsc). Verificar que dist/ contiene todos los archivos compilados. Verificar que dist/index.js tiene shebang correcto. Verificar que package.json files incluye solo dist/, README.md, LICENSE. Verificar que npm pack genera un .tgz válido.",
-      "files": ["dist/"],
-      "status": "pending",
-      "dependencies": ["T041", "T047"],
-      "estimatedHours": 0.5
-    },
-    {
-      "id": "T049",
-      "layer": "quality",
-      "name": "Auditoría de dependencias y verificación de licencias",
-      "description": "Ejecutar npm audit --production. Verificar que no hay vulnerabilidades críticas/altas. Si las hay, evaluar y documentar. Verificar licencias de dependencias (MIT, Apache-2.0, ISC, BSD) compatibles con MIT del proyecto.",
-      "files": [],
-      "status": "pending",
-      "dependencies": ["T048"],
-      "estimatedHours": 0.5
-    }
-  ],
-  "taskLayers": {
-    "config": {
-      "description": "Configuración del proyecto, variables de entorno, tsconfig, package.json",
-      "tasks": ["T001", "T005", "T006"]
-    },
-    "types": {
-      "description": "Interfaces TypeScript compartidas (MCP, Jira, dominio)",
-      "tasks": ["T002", "T003", "T004"]
-    },
-    "auth": {
-      "description": "Autenticación Basic Auth para Jira Cloud",
-      "tasks": ["T007", "T008"]
-    },
-    "utils": {
-      "description": "Utilidades: errores, retry, sanitización",
-      "tasks": ["T009", "T010", "T011", "T012", "T013", "T014"]
-    },
-    "services": {
-      "description": "Cliente HTTP de Jira y rate limiting",
-      "tasks": ["T015", "T016"]
-    },
-    "fixtures": {
-      "description": "Respuestas JSON mock de Jira API para tests",
-      "tasks": ["T017"]
-    },
-    "schemas": {
-      "description": "Zod schemas de validación para las 9 tools",
-      "tasks": ["T018", "T019", "T020", "T021", "T022", "T023", "T024", "T025", "T026", "T027"]
-    },
-    "tools": {
-      "description": "Handlers de las 9 tools MCP + registro centralizado + tests",
-      "tasks": ["T028", "T029", "T030", "T031", "T032", "T033", "T034", "T035", "T036", "T037", "T038"]
-    },
-    "transport": {
-      "description": "Transporte stdio del MCP Server",
-      "tasks": ["T039"]
-    },
-    "server": {
-      "description": "Creación del MCP Server y entry point",
-      "tasks": ["T040", "T041"]
-    },
-    "integration": {
-      "description": "Tests de integración (protocolo MCP, token safety, Jira real)",
-      "tasks": ["T042", "T043", "T044"]
-    },
-    "ci": {
-      "description": "CI/CD con GitHub Actions",
-      "tasks": ["T045"]
-    },
-    "docs": {
-      "description": "README.md y documentación de usuario",
-      "tasks": ["T046"]
-    },
-    "quality": {
-      "description": "Linting, formatting, build verification, audit",
-      "tasks": ["T047", "T048", "T049"]
-    }
-  },
-  "orderOfExecution": [
-    "T001 → Inicializar proyecto (base)",
-    "T002, T003 → Tipos (paralelo)",
-    "T004 → Barrel export (depende de T002, T003)",
-    "T005 → Configuración (depende de T004)",
-    "T006 → Tests de config (depende de T005)",
-    "T007 → Auth (depende de T004)",
-    "T008 → Tests de auth (depende de T007)",
-    "T009, T011, T013 → Utilidades (paralelo, dependen de T004)",
-    "T010, T012, T014 → Tests de utilidades (paralelo, dependen de T009, T011, T013)",
-    "T015 → JiraClient (depende de T007, T009, T011, T013, T005)",
-    "T016 → Tests de JiraClient (depende de T015)",
-    "T017 → Fixtures (paralelo con schemas)",
-    "T018-T026 → Schemas Zod (paralelo, dependen de T004)",
-    "T027 → Tests de schemas (depende de T018-T026)",
-    "T028-T036 → Tool handlers (paralelo, dependen de T015 + su schema)",
-    "T037 → Tests de handlers (depende de T028-T036)",
-    "T038 → Registro centralizado (depende de T028-T036)",
-    "T039 → Transporte stdio (depende de T001)",
-    "T040 → Server (depende de T001)",
-    "T041 → Entry point (depende de T005, T015, T038, T039, T040)",
-    "T042, T043 → Tests de integración (paralelo, dependen de T041)",
-    "T044 → Test Jira real (depende de T041, condicional)",
-    "T045 → CI/CD (depende de T041)",
-    "T046 → README (depende de T041)",
-    "T047 → Lint + Format (depende de T045)",
-    "T048 → Build verification (depende de T041, T047)",
-    "T049 → Audit (depende de T048)"
-  ]
+﻿{
+    "featureId":  "F001",
+    "featureName":  "mcp-jira-server",
+    "description":  "MCP Server para Jira Cloud - MVP v1.0.0 con 9 tools, transporte stdio, autenticaciÃ³n Basic Auth, rate limiting y token safety.",
+    "version":  "1.0.0",
+    "estimatedTotalHours":  40,
+    "tasks":  [
+                  {
+                      "id":  "T001",
+                      "layer":  "config",
+                      "name":  "Inicializar proyecto Node.js + TypeScript",
+                      "description":  "Crear package.json con type: module, tsconfig.json estricto, .gitignore, .env.example, .eslintrc.json, .prettierrc. Instalar dependencias: @modelcontextprotocol/sdk, zod, pino. Instalar devDependencies: typescript, tsx, vitest, eslint, prettier, @types/node.",
+                      "files":  [
+                                    "package.json",
+                                    "tsconfig.json",
+                                    ".gitignore",
+                                    ".env.example",
+                                    ".eslintrc.json",
+                                    ".prettierrc"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+
+                                       ],
+                      "estimatedHours":  0.5
+                  },
+                  {
+                      "id":  "T002",
+                      "layer":  "types",
+                      "name":  "Definir tipos del protocolo MCP",
+                      "description":  "Crear src/types/mcp.ts con interfaces: JsonRpcRequest, JsonRpcResponse, JsonRpcError, ErrorCodes, ToolDefinition, ToolCallResult, ToolCallContent. Todo tipado estricto con TypeScript.",
+                      "files":  [
+                                    "src/types/mcp.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T001"
+                                       ],
+                      "estimatedHours":  0.5
+                  },
+                  {
+                      "id":  "T003",
+                      "layer":  "types",
+                      "name":  "Definir tipos de dominio Jira",
+                      "description":  "Crear src/types/jira.ts con interfaces: Issue, IssueSearchResult, Sprint, SprintSearchResult, JiraUser, JiraComment, CommentListResult, CommentAddResult, JiraTransition, TransitionResult, JiraAttachment, AttachmentResult, CreateIssueResult, UpdateIssueResult, AssignUserResult, HealthCheckResult, JiraConfig, SanitizedConfig, RateLimitConfig, JiraRequestOptions, JiraApiResponse, JiraErrorResponse.",
+                      "files":  [
+                                    "src/types/jira.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T001"
+                                       ],
+                      "estimatedHours":  1.0
+                  },
+                  {
+                      "id":  "T004",
+                      "layer":  "types",
+                      "name":  "Crear barrel export de tipos",
+                      "description":  "Crear src/types/index.ts que re-exporta todos los tipos de mcp.ts y jira.ts.",
+                      "files":  [
+                                    "src/types/index.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T002",
+                                           "T003"
+                                       ],
+                      "estimatedHours":  0.25
+                  },
+                  {
+                      "id":  "T005",
+                      "layer":  "config",
+                      "name":  "Implementar mÃ³dulo de configuraciÃ³n",
+                      "description":  "Crear src/config/index.ts con: EnvSchema (Zod) que valida JIRA_HOST, JIRA_EMAIL, JIRA_API_TOKEN; loadConfig() que construye JiraConfig con baseUrl y agileBaseUrl derivados; sanitizeConfig() que oculta el token. Lanzar error descriptivo si faltan variables.",
+                      "files":  [
+                                    "src/config/index.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  1.0
+                  },
+                  {
+                      "id":  "T006",
+                      "layer":  "config",
+                      "name":  "Tests unitarios de configuraciÃ³n",
+                      "description":  "Crear tests/unit/config/index.test.ts. Probar: carga exitosa de env vars, error cuando falta JIRA_HOST, error cuando falta JIRA_EMAIL, error cuando falta JIRA_API_TOKEN, validaciÃ³n de formato de email, sanitizaciÃ³n oculta el token, URLs base se construyen correctamente.",
+                      "files":  [
+                                    "tests/unit/config/index.test.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T005"
+                                       ],
+                      "estimatedHours":  1.0
+                  },
+                  {
+                      "id":  "T007",
+                      "layer":  "auth",
+                      "name":  "Implementar mÃ³dulo de autenticaciÃ³n Basic Auth",
+                      "description":  "Crear src/auth/index.ts con: buildAuthHeader(email, apiToken) que genera \u0027Basic base64(email:token)\u0027. FunciÃ³n pura sin efectos secundarios ni acceso a env vars. Tipado estricto.",
+                      "files":  [
+                                    "src/auth/index.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  0.5
+                  },
+                  {
+                      "id":  "T008",
+                      "layer":  "auth",
+                      "name":  "Tests unitarios de autenticaciÃ³n",
+                      "description":  "Crear tests/unit/auth/index.test.ts. Probar: buildAuthHeader genera header correcto, formato \u0027Basic {base64}\u0027, decodificaciÃ³n base64 produce email:token, manejo de caracteres especiales en email y token.",
+                      "files":  [
+                                    "tests/unit/auth/index.test.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T007"
+                                       ],
+                      "estimatedHours":  0.75
+                  },
+                  {
+                      "id":  "T009",
+                      "layer":  "utils",
+                      "name":  "Implementar jerarquÃ­a de errores",
+                      "description":  "Crear src/utils/errors.ts con: McpError base (con code, message, data, toJsonRpcError()), ValidationError (code -32602), JiraAuthError, RateLimitError, NetworkError, TimeoutError. FunciÃ³n mapJiraError(status, body, path) que traduce errores HTTP de Jira a McpError con mensajes accionables.",
+                      "files":  [
+                                    "src/utils/errors.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  1.0
+                  },
+                  {
+                      "id":  "T010",
+                      "layer":  "utils",
+                      "name":  "Tests unitarios de errores",
+                      "description":  "Crear tests/unit/utils/errors.test.ts. Probar: cada clase de error tiene el cÃ³digo correcto, toJsonRpcError() produce formato vÃ¡lido, mapJiraError para 401, 403, 404, 429, 5xx, 400 con errorMessages, 400 con errors por campo. Mensajes contienen informaciÃ³n accionable para el LLM.",
+                      "files":  [
+                                    "tests/unit/utils/errors.test.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T009"
+                                       ],
+                      "estimatedHours":  1.0
+                  },
+                  {
+                      "id":  "T011",
+                      "layer":  "utils",
+                      "name":  "Implementar rate limiting con backoff exponencial",
+                      "description":  "Crear src/utils/retry.ts con: withRetry(fn, options) que ejecuta una funciÃ³n async con hasta maxRetries intentos, backoff exponencial, respeta Retry-After header, logging en cada reintento. FunciÃ³n sleep(ms). FunciÃ³n calculateBackoff(attempt, baseTimeout, error). MÃ¡ximo 210s en total.",
+                      "files":  [
+                                    "src/utils/retry.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  1.5
+                  },
+                  {
+                      "id":  "T012",
+                      "layer":  "utils",
+                      "name":  "Tests unitarios de rate limiting",
+                      "description":  "Crear tests/unit/utils/retry.test.ts. Probar: Ã©xito en primer intento, reintento tras fallo, respeta Retry-After (mock timer), mÃ¡ximo 3 reintentos, error tras agotar reintentos, backoff exponencial (30s, 60s, 120s), no reintenta errores 4xx (excepto 429).",
+                      "files":  [
+                                    "tests/unit/utils/retry.test.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T011"
+                                       ],
+                      "estimatedHours":  1.5
+                  },
+                  {
+                      "id":  "T013",
+                      "layer":  "utils",
+                      "name":  "Implementar sanitizaciÃ³n de datos sensibles",
+                      "description":  "Crear src/utils/sanitize.ts con: sanitizeHeaders(headers) que reemplaza Authorization por \u0027Basic [REDACTED]\u0027, sanitizeConfig(config) que oculta apiToken, redactToken(text, token) que reemplaza todas las ocurrencias del token en un string. Cada funciÃ³n es pura.",
+                      "files":  [
+                                    "src/utils/sanitize.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  0.75
+                  },
+                  {
+                      "id":  "T014",
+                      "layer":  "utils",
+                      "name":  "Tests unitarios de sanitizaciÃ³n",
+                      "description":  "Crear tests/unit/utils/sanitize.test.ts. Probar: sanitizeHeaders oculta Authorization, sanitizeHeaders preserva otros headers, sanitizeConfig muestra \u0027***SET***\u0027 cuando hay token, sanitizeConfig muestra \u0027NOT SET\u0027 cuando no hay, redactToken reemplaza todas las ocurrencias, redactToken con token vacÃ­o no modifica el texto.",
+                      "files":  [
+                                    "tests/unit/utils/sanitize.test.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T013"
+                                       ],
+                      "estimatedHours":  0.75
+                  },
+                  {
+                      "id":  "T015",
+                      "layer":  "services",
+                      "name":  "Implementar cliente HTTP de Jira (jira-client.ts)",
+                      "description":  "Crear src/services/jira-client.ts con clase JiraClient. MÃ©todos: get(path, query), post(path, body), put(path, body), delete(path). Internamente: buildUrl (une baseUrl + path + query string), buildHeaders (auth + content-type), fetch nativo con AbortSignal.timeout, integraciÃ³n con withRetry, mapeo de errores HTTP vÃ­a mapJiraError, sanitizaciÃ³n de headers en logs. Soporte para useAgileApi=true (agileBaseUrl) y isFormData=true (multipart). Logger inyectado.",
+                      "files":  [
+                                    "src/services/jira-client.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T007",
+                                           "T009",
+                                           "T011",
+                                           "T013",
+                                           "T005"
+                                       ],
+                      "estimatedHours":  2.5
+                  },
+                  {
+                      "id":  "T016",
+                      "layer":  "services",
+                      "name":  "Tests unitarios del cliente HTTP",
+                      "description":  "Crear tests/unit/services/jira-client.test.ts con mock de fetch global. Probar: GET construye URL correcta, POST incluye body JSON, PUT incluye body, headers de auth presentes, header Authorization es \u0027Basic ...\u0027, no incluye token en logs, timeout con AbortSignal, errores 401/403/404/429/500 se traducen a McpError, rate limiting se aplica, isFormData envÃ­a FormData, useAgileApi usa agileBaseUrl.",
+                      "files":  [
+                                    "tests/unit/services/jira-client.test.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T015"
+                                       ],
+                      "estimatedHours":  2.0
+                  },
+                  {
+                      "id":  "T017",
+                      "layer":  "fixtures",
+                      "name":  "Crear fixtures de respuestas Jira",
+                      "description":  "Crear archivos JSON en tests/fixtures/jira-responses/: search-issues.json (respuesta exitosa con 3 issues), create-issue.json (respuesta 201), transitions.json (lista de transiciones), sprints.json (lista de sprints), comments.json (lista de comentarios), attachment.json (respuesta de adjunto), myself.json (respuesta health check). Crear carpeta errors/ con: 400-invalid-jql.json, 401-unauthorized.json, 403-forbidden.json, 404-not-found.json, 429-rate-limit.json.",
+                      "files":  [
+                                    "tests/fixtures/jira-responses/search-issues.json",
+                                    "tests/fixtures/jira-responses/create-issue.json",
+                                    "tests/fixtures/jira-responses/transitions.json",
+                                    "tests/fixtures/jira-responses/sprints.json",
+                                    "tests/fixtures/jira-responses/comments.json",
+                                    "tests/fixtures/jira-responses/attachment.json",
+                                    "tests/fixtures/jira-responses/myself.json",
+                                    "tests/fixtures/jira-responses/errors/400-invalid-jql.json",
+                                    "tests/fixtures/jira-responses/errors/401-unauthorized.json",
+                                    "tests/fixtures/jira-responses/errors/403-forbidden.json",
+                                    "tests/fixtures/jira-responses/errors/404-not-found.json",
+                                    "tests/fixtures/jira-responses/errors/429-rate-limit.json"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  1.0
+                  },
+                  {
+                      "id":  "T018",
+                      "layer":  "schemas",
+                      "name":  "Crear Zod schemas para search_issues",
+                      "description":  "Crear src/schemas/search-issues.ts con: SearchIssuesInputSchema (jql opcional, projectKey, issueType enum, status, assignee, priority enum, labels array, sprint, text, startAt, maxResults, orderBy, fields), SearchIssuesInput type, SearchIssuesOutputSchema, SearchIssuesOutput type.",
+                      "files":  [
+                                    "src/schemas/search-issues.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  0.75,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T019",
+                      "layer":  "schemas",
+                      "name":  "Crear Zod schemas para create_issue",
+                      "description":  "Crear src/schemas/create-issue.ts con: CreateIssueInputSchema (projectKey, summary, issueType enum con refinamiento: Subtask requiere parentKey, Epic requiere epicName), CreateIssueOutputSchema, tipos inferidos.",
+                      "files":  [
+                                    "src/schemas/create-issue.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  0.75,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T020",
+                      "layer":  "schemas",
+                      "name":  "Crear Zod schemas para update_issue",
+                      "description":  "Crear src/schemas/update-issue.ts con: UpdateIssueInputSchema (issueKey, summary, description, priority, labels, components, customFields), refinamiento: al menos un campo ademÃ¡s de issueKey debe estar presente. UpdateIssueOutputSchema. Tipos inferidos.",
+                      "files":  [
+                                    "src/schemas/update-issue.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  0.5,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T021",
+                      "layer":  "schemas",
+                      "name":  "Crear Zod schemas para transition_issue",
+                      "description":  "Crear src/schemas/transition-issue.ts con: TransitionIssueInputSchema (issueKey, transitionName, transitionId, resolution, comment, listTransitions), refinamiento: listTransitions=true o transitionName/transitionId requerido. TransitionIssueOutputSchema con availableTransitions. Tipos inferidos.",
+                      "files":  [
+                                    "src/schemas/transition-issue.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  0.5,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T022",
+                      "layer":  "schemas",
+                      "name":  "Crear Zod schemas para get_sprints",
+                      "description":  "Crear src/schemas/get-sprints.ts con: GetSprintsInputSchema (boardId, boardName, state enum, includeIssues, startAt, maxResults), refinamiento: boardId o boardName requerido. GetSprintsOutputSchema. Tipos inferidos.",
+                      "files":  [
+                                    "src/schemas/get-sprints.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  0.5,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T023",
+                      "layer":  "schemas",
+                      "name":  "Crear Zod schemas para assign_user",
+                      "description":  "Crear src/schemas/assign-user.ts con: AssignUserInputSchema (issueKey, accountId nullable), AssignUserOutputSchema. Tipos inferidos.",
+                      "files":  [
+                                    "src/schemas/assign-user.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  0.25,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T024",
+                      "layer":  "schemas",
+                      "name":  "Crear Zod schemas para manage_comments",
+                      "description":  "Crear src/schemas/manage-comments.ts con: ManageCommentsInputSchema usando discriminatedUnion para \u0027list\u0027 (issueKey, startAt, maxResults) y \u0027add\u0027 (issueKey, body). CommentsListOutputSchema, CommentAddOutputSchema. Tipos inferidos.",
+                      "files":  [
+                                    "src/schemas/manage-comments.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  0.75,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T025",
+                      "layer":  "schemas",
+                      "name":  "Crear Zod schemas para attach_file",
+                      "description":  "Crear src/schemas/attach-file.ts con: AttachFileInputSchema (issueKey, filePath con refinamiento: archivo debe existir, ser legible, \u003c10 MB). AttachFileOutputSchema. Tipos inferidos.",
+                      "files":  [
+                                    "src/schemas/attach-file.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  0.5,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T026",
+                      "layer":  "schemas",
+                      "name":  "Crear Zod schemas para health_check",
+                      "description":  "Crear src/schemas/health-check.ts con: HealthCheckInputSchema (objeto vacÃ­o strict), HealthCheckOutputSchema. Tipos inferidos.",
+                      "files":  [
+                                    "src/schemas/health-check.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T004"
+                                       ],
+                      "estimatedHours":  0.25,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T027",
+                      "layer":  "schemas",
+                      "name":  "Tests unitarios de schemas Zod",
+                      "description":  "Crear tests/unit/schemas/*.test.ts para cada schema. Probar: datos vÃ¡lidos se aceptan, datos invÃ¡lidos muestran mensajes de error claros, refinamientos cruzados funcionan (Subtask requiere parentKey, Epic requiere epicName), valores por defecto, enums estrictos, validaciÃ³n de archivo (path inexistente, tamaÃ±o excedido), discriminatedUnion de comments.",
+                      "files":  [
+                                    "tests/unit/schemas/search-issues.test.ts",
+                                    "tests/unit/schemas/create-issue.test.ts",
+                                    "tests/unit/schemas/update-issue.test.ts",
+                                    "tests/unit/schemas/transition-issue.test.ts",
+                                    "tests/unit/schemas/get-sprints.test.ts",
+                                    "tests/unit/schemas/assign-user.test.ts",
+                                    "tests/unit/schemas/manage-comments.test.ts",
+                                    "tests/unit/schemas/attach-file.test.ts",
+                                    "tests/unit/schemas/health-check.test.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T018",
+                                           "T019",
+                                           "T020",
+                                           "T021",
+                                           "T022",
+                                           "T023",
+                                           "T024",
+                                           "T025",
+                                           "T026"
+                                       ],
+                      "estimatedHours":  2.0,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T028",
+                      "layer":  "tools",
+                      "name":  "Implementar tool handler: search_issues",
+                      "description":  "Crear src/tools/search-issues.ts con registerSearchIssues(server, jiraClient). Implementar: buildJql(input) que construye JQL a partir de parÃ¡metros estructurados, mapSearchResponse(raw, host) que transforma la respuesta de Jira a IssueSearchResult, defaultFields list. Manejar caso sin resultados (total: 0). Manejar errores vÃ­a try/catch â†’ McpError.",
+                      "files":  [
+                                    "src/tools/search-issues.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T015",
+                                           "T018"
+                                       ],
+                      "estimatedHours":  2.0,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T029",
+                      "layer":  "tools",
+                      "name":  "Implementar tool handler: create_issue",
+                      "description":  "Crear src/tools/create-issue.ts con registerCreateIssue(server, jiraClient, config). Implementar: buildCreatePayload(input) que construye el body para POST /rest/api/3/issue, manejo de parentKey para Subtask, epicLink/epicName para Epic, mapeo de priority/assignee a objetos de Jira, transformaciÃ³n de respuesta a CreateIssueResult.",
+                      "files":  [
+                                    "src/tools/create-issue.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T015",
+                                           "T019"
+                                       ],
+                      "estimatedHours":  2.0,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T030",
+                      "layer":  "tools",
+                      "name":  "Implementar tool handler: update_issue",
+                      "description":  "Crear src/tools/update-issue.ts con registerUpdateIssue(server, jiraClient). Implementar: buildUpdatePayload(input) que solo incluye campos presentes, transformaciÃ³n de respuesta 204 No Content a UpdateIssueResult con changedFields, tracking de quÃ© campos se enviaron para actualizar.",
+                      "files":  [
+                                    "src/tools/update-issue.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T015",
+                                           "T020"
+                                       ],
+                      "estimatedHours":  1.5,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T031",
+                      "layer":  "tools",
+                      "name":  "Implementar tool handler: transition_issue",
+                      "description":  "Crear src/tools/transition-issue.ts con registerTransitionIssue(server, jiraClient). Implementar: listTransitions=true â†’ GET /transitions y devolver lista, resoluciÃ³n de transitionName â†’ GET /transitions + bÃºsqueda por nombre, ejecuciÃ³n de transiciÃ³n â†’ POST /transitions con transitionId + resoluciÃ³n + comentario opcional. Manejar ambigÃ¼edad (mÃºltiples matches).",
+                      "files":  [
+                                    "src/tools/transition-issue.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T015",
+                                           "T021"
+                                       ],
+                      "estimatedHours":  2.5,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T032",
+                      "layer":  "tools",
+                      "name":  "Implementar tool handler: get_sprints",
+                      "description":  "Crear src/tools/get-sprints.ts con registerGetSprints(server, jiraClient). Implementar: resoluciÃ³n de boardName â†’ GET /rest/agile/1.0/board?name=, consulta de sprints con estado, includeIssues=true â†’ GET /rest/agile/1.0/sprint/{id}/issue. TransformaciÃ³n a SprintSearchResult.",
+                      "files":  [
+                                    "src/tools/get-sprints.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T015",
+                                           "T022"
+                                       ],
+                      "estimatedHours":  2.0,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T033",
+                      "layer":  "tools",
+                      "name":  "Implementar tool handler: assign_user",
+                      "description":  "Crear src/tools/assign-user.ts con registerAssignUser(server, jiraClient). Implementar: accountId null o \u0027unassigned\u0027 â†’ PUT /issue/{key}/assignee con body { accountId: null }, asignar â†’ PUT /issue/{key}/assignee con body { accountId: \u0027...\u0027 }, transformaciÃ³n a AssignUserResult.",
+                      "files":  [
+                                    "src/tools/assign-user.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T015",
+                                           "T023"
+                                       ],
+                      "estimatedHours":  1.5,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T034",
+                      "layer":  "tools",
+                      "name":  "Implementar tool handler: manage_comments",
+                      "description":  "Crear src/tools/manage-comments.ts con registerManageComments(server, jiraClient). Implementar: action=list â†’ GET /issue/{key}/comment con paginaciÃ³n, action=add â†’ POST /issue/{key}/comment con body ADF o texto, transformaciÃ³n a CommentListResult / CommentAddResult. Manejar comentario vacÃ­o (error Zod).",
+                      "files":  [
+                                    "src/tools/manage-comments.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T015",
+                                           "T024"
+                                       ],
+                      "estimatedHours":  1.5,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T035",
+                      "layer":  "tools",
+                      "name":  "Implementar tool handler: attach_file",
+                      "description":  "Crear src/tools/attach-file.ts con registerAttachFile(server, jiraClient). Implementar: validaciÃ³n pre-handler (existsSync, statSync, tamaÃ±o \u003c10MB), lectura del archivo, construcciÃ³n de FormData con Blob, POST con header X-Atlassian-Token: no-check, transformaciÃ³n a AttachmentResult. Manejar tipos MIME mediante detecciÃ³n por extensiÃ³n.",
+                      "files":  [
+                                    "src/tools/attach-file.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T015",
+                                           "T025"
+                                       ],
+                      "estimatedHours":  2.0,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T036",
+                      "layer":  "tools",
+                      "name":  "Implementar tool handler: health_check",
+                      "description":  "Crear src/tools/health-check.ts con registerHealthCheck(server, jiraClient, config). Implementar: GET /rest/api/3/myself, transformaciÃ³n a HealthCheckResult con status \u0027connected\u0027/\u0027error\u0027, incluir jiraHost y timestamp. Manejar errores de auth y red con mensajes descriptivos (incluyendo URL para regenerar token).",
+                      "files":  [
+                                    "src/tools/health-check.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T015",
+                                           "T026"
+                                       ],
+                      "estimatedHours":  1.0,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T037",
+                      "layer":  "tools",
+                      "name":  "Tests unitarios de tool handlers",
+                      "description":  "Crear tests/unit/tools/*.test.ts para cada handler. Usar mock de JiraClient (vi.fn()). Probar: llamada exitosa con transformaciÃ³n correcta, errores HTTP se traducen a mensajes accionables, buildJql genera JQL correcto, buildCreatePayload incluye campos opcionales solo si presentes, resoluciÃ³n de transitionName, manejo de boardName â†’ boardId, desasignaciÃ³n con accountId null, discriminatedUnion de comments, validaciÃ³n de archivo. Cada test verifica que la respuesta tiene formato ToolCallResult.",
+                      "files":  [
+                                    "tests/unit/tools/search-issues.test.ts",
+                                    "tests/unit/tools/create-issue.test.ts",
+                                    "tests/unit/tools/update-issue.test.ts",
+                                    "tests/unit/tools/transition-issue.test.ts",
+                                    "tests/unit/tools/get-sprints.test.ts",
+                                    "tests/unit/tools/assign-user.test.ts",
+                                    "tests/unit/tools/manage-comments.test.ts",
+                                    "tests/unit/tools/attach-file.test.ts",
+                                    "tests/unit/tools/health-check.test.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T028",
+                                           "T029",
+                                           "T030",
+                                           "T031",
+                                           "T032",
+                                           "T033",
+                                           "T034",
+                                           "T035",
+                                           "T036"
+                                       ],
+                      "estimatedHours":  4.0,
+                      "completedAt":  "2026-06-13T20:10:00Z"
+                  },
+                  {
+                      "id":  "T038",
+                      "layer":  "tools",
+                      "name":  "Implementar registro centralizado de tools",
+                      "description":  "Crear src/tools/register.ts con registerAllTools(server, jiraClient, config) que llama a register{Name} de cada tool. Un solo punto de registro para mantener limpio index.ts.",
+                      "files":  [
+                                    "src/tools/register.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T028",
+                                           "T029",
+                                           "T030",
+                                           "T031",
+                                           "T032",
+                                           "T033",
+                                           "T034",
+                                           "T035",
+                                           "T036"
+                                       ],
+                      "estimatedHours":  0.5
+                  },
+                  {
+                      "id":  "T039",
+                      "layer":  "transport",
+                      "name":  "Implementar transporte stdio server",
+                      "description":  "Crear src/transport/stdio-server.ts con: createStdioTransport() que instancia StdioServerTransport del SDK, connectTransport(server, transport) que conecta el McpServer al transporte. Manejar errores de conexiÃ³n y seÃ±ales de cierre (SIGINT, SIGTERM).",
+                      "files":  [
+                                    "src/transport/stdio-server.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T001"
+                                       ],
+                      "estimatedHours":  0.75
+                  },
+                  {
+                      "id":  "T040",
+                      "layer":  "server",
+                      "name":  "Implementar server.ts",
+                      "description":  "Crear src/server.ts con: createServer(config) que crea McpServer con serverInfo { name: \u0027opencode-jira-mcp\u0027, version: \u00271.0.0\u0027 }, capabilities { tools: {} }. No registra tools (eso lo hace register.ts). Retorna la instancia de McpServer.",
+                      "files":  [
+                                    "src/server.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T001"
+                                       ],
+                      "estimatedHours":  0.5
+                  },
+                  {
+                      "id":  "T041",
+                      "layer":  "entry",
+                      "name":  "Implementar entry point (index.ts)",
+                      "description":  "Crear src/index.ts con: shebang #!/usr/bin/env node. FunciÃ³n main() asÃ­ncrona que: 1) loadConfig(), 2) crea logger (pino) a stderr, 3) crea JiraClient, 4) createServer(), 5) registerAllTools(), 6) createStdioTransport(), 7) server.connect(transport). Manejar errores: configuraciÃ³n invÃ¡lida (log y exit 1), error de conexiÃ³n (log y exit 1). SeÃ±ales: SIGINT/SIGTERM â†’ cleanup y exit 0. Log al inicio: \u0027opencode-jira-mcp v1.0.0 starting, connecting to {host} as {email}\u0027. Shebang al inicio del archivo.",
+                      "files":  [
+                                    "src/index.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T005",
+                                           "T015",
+                                           "T038",
+                                           "T039",
+                                           "T040"
+                                       ],
+                      "estimatedHours":  1.5
+                  },
+                  {
+                      "id":  "T042",
+                      "layer":  "integration",
+                      "name":  "Test de integraciÃ³n: protocolo MCP completo",
+                      "description":  "Crear tests/integration/mcp-protocol.test.ts. Spawn del proceso MCP Server (node dist/index.js con env vars mock), simular initialize request/response, simular tools/list (verificar 9 tools registradas con nombres y schemas correctos), simular tools/call para search_issues con JiraClient mockeado, verificar JSON-RPC 2.0 vÃ¡lido en stdout y nunca roto por logs. Usar child_process.spawn o stdio simulation.",
+                      "files":  [
+                                    "tests/integration/mcp-protocol.test.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T041"
+                                       ],
+                      "estimatedHours":  3.0
+                  },
+                  {
+                      "id":  "T043",
+                      "layer":  "integration",
+                      "name":  "Test de seguridad: token safety",
+                      "description":  "Crear tests/integration/token-safety.test.ts. Probar: GIVEN el MCP Server con JIRA_API_TOKEN configurado, WHEN ocurre cualquier error (auth, red, validaciÃ³n), THEN stdout NO contiene el token, stderr NO contiene el token, respuesta JSON-RPC de error NO contiene el token. Probar con mÃºltiples escenarios: 401 de Jira, error de validaciÃ³n Zod, error de red. Usar grep sobre stdout/stderr capturados.",
+                      "files":  [
+                                    "tests/integration/token-safety.test.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T041"
+                                       ],
+                      "estimatedHours":  2.0
+                  },
+                  {
+                      "id":  "T044",
+                      "layer":  "integration",
+                      "name":  "Test de integraciÃ³n contra Jira real (opcional, CI only)",
+                      "description":  "Crear tests/integration/jira-real.test.ts. Solo se ejecuta si JIRA_HOST, JIRA_EMAIL, JIRA_API_TOKEN estÃ¡n configurados (skip si no). Probar: health check exitoso contra Jira real, search_issues con JQL simple, create_issue con proyecto real (y cleanup), transiciones disponibles. Marcar con .skip si no hay credenciales. Ãštil para CI con secrets.",
+                      "files":  [
+                                    "tests/integration/jira-real.test.ts"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T041"
+                                       ],
+                      "estimatedHours":  1.5
+                  },
+                  {
+                      "id":  "T045",
+                      "layer":  "ci",
+                      "name":  "Configurar CI/CD con GitHub Actions",
+                      "description":  "Crear .github/workflows/ci.yml con: build (npm ci, npm run build), lint (npm run lint), test (npm test con coverage), audit (npm audit --production). Correr en push a main y PRs. Matrix: Node.js 18, 20, 22. Publicar a npm en release (workflow_dispatch con tag). Incluir vitest coverage report como artifact.",
+                      "files":  [
+                                    ".github/workflows/ci.yml",
+                                    ".github/workflows/publish.yml"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T041"
+                                       ],
+                      "estimatedHours":  1.0
+                  },
+                  {
+                      "id":  "T046",
+                      "layer":  "docs",
+                      "name":  "Escribir README.md",
+                      "description":  "Crear README.md con: descripciÃ³n del proyecto, badges (npm version, CI status), quick start (instalaciÃ³n, 3 env vars, configuraciÃ³n en opencode.json), ejemplos de uso para cada una de las 9 tools (prompt del usuario + respuesta del agente), security notes (token nunca en logs, rotaciÃ³n), troubleshooting (errores comunes y soluciones), development guide (cÃ³mo contribuir, scripts npm, estructura del proyecto), license.",
+                      "files":  [
+                                    "README.md"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T041"
+                                       ],
+                      "estimatedHours":  2.0
+                  },
+                  {
+                      "id":  "T047",
+                      "layer":  "quality",
+                      "name":  "Configurar ESLint + Prettier y ejecutar fixes",
+                      "description":  "Verificar que .eslintrc.json y .prettierrc estÃ¡n configurados. Ejecutar npm run lint:fix y npm run format sobre todo el cÃ³digo fuente. Asegurar que el CI rompe si hay errores de linting.",
+                      "files":  [
+                                    "eslint.config.js",
+                                    ".prettierrc"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T045"
+                                       ],
+                      "estimatedHours":  0.5
+                  },
+                  {
+                      "id":  "T048",
+                      "layer":  "quality",
+                      "name":  "Build final y verificaciÃ³n de artifact",
+                      "description":  "Ejecutar npm run build (tsc). Verificar que dist/ contiene todos los archivos compilados. Verificar que dist/index.js tiene shebang correcto. Verificar que package.json files incluye solo dist/, README.md, LICENSE. Verificar que npm pack genera un .tgz vÃ¡lido.",
+                      "files":  [
+                                    "dist/"
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T041",
+                                           "T047"
+                                       ],
+                      "estimatedHours":  0.5
+                  },
+                  {
+                      "id":  "T049",
+                      "layer":  "quality",
+                      "name":  "AuditorÃ­a de dependencias y verificaciÃ³n de licencias",
+                      "description":  "Ejecutar npm audit --production. Verificar que no hay vulnerabilidades crÃ­ticas/altas. Si las hay, evaluar y documentar. Verificar licencias de dependencias (MIT, Apache-2.0, ISC, BSD) compatibles con MIT del proyecto.",
+                      "files":  [
+
+                                ],
+                      "status":  "done",
+                      "dependencies":  [
+                                           "T048"
+                                       ],
+                      "estimatedHours":  0.5
+                  }
+              ],
+    "taskLayers":  {
+                       "config":  {
+                                      "description":  "ConfiguraciÃ³n del proyecto, variables de entorno, tsconfig, package.json",
+                                      "tasks":  [
+                                                    "T001",
+                                                    "T005",
+                                                    "T006"
+                                                ]
+                                  },
+                       "types":  {
+                                     "description":  "Interfaces TypeScript compartidas (MCP, Jira, dominio)",
+                                     "tasks":  [
+                                                   "T002",
+                                                   "T003",
+                                                   "T004"
+                                               ]
+                                 },
+                       "auth":  {
+                                    "description":  "AutenticaciÃ³n Basic Auth para Jira Cloud",
+                                    "tasks":  [
+                                                  "T007",
+                                                  "T008"
+                                              ]
+                                },
+                       "utils":  {
+                                     "description":  "Utilidades: errores, retry, sanitizaciÃ³n",
+                                     "tasks":  [
+                                                   "T009",
+                                                   "T010",
+                                                   "T011",
+                                                   "T012",
+                                                   "T013",
+                                                   "T014"
+                                               ]
+                                 },
+                       "services":  {
+                                        "description":  "Cliente HTTP de Jira y rate limiting",
+                                        "tasks":  [
+                                                      "T015",
+                                                      "T016"
+                                                  ]
+                                    },
+                       "fixtures":  {
+                                        "description":  "Respuestas JSON mock de Jira API para tests",
+                                        "tasks":  [
+                                                      "T017"
+                                                  ]
+                                    },
+                       "schemas":  {
+                                       "description":  "Zod schemas de validaciÃ³n para las 9 tools",
+                                       "tasks":  [
+                                                     "T018",
+                                                     "T019",
+                                                     "T020",
+                                                     "T021",
+                                                     "T022",
+                                                     "T023",
+                                                     "T024",
+                                                     "T025",
+                                                     "T026",
+                                                     "T027"
+                                                 ]
+                                   },
+                       "tools":  {
+                                     "description":  "Handlers de las 9 tools MCP + registro centralizado + tests",
+                                     "tasks":  [
+                                                   "T028",
+                                                   "T029",
+                                                   "T030",
+                                                   "T031",
+                                                   "T032",
+                                                   "T033",
+                                                   "T034",
+                                                   "T035",
+                                                   "T036",
+                                                   "T037",
+                                                   "T038"
+                                               ]
+                                 },
+                       "transport":  {
+                                         "description":  "Transporte stdio del MCP Server",
+                                         "tasks":  [
+                                                       "T039"
+                                                   ]
+                                     },
+                       "server":  {
+                                      "description":  "CreaciÃ³n del MCP Server y entry point",
+                                      "tasks":  [
+                                                    "T040",
+                                                    "T041"
+                                                ]
+                                  },
+                       "integration":  {
+                                           "description":  "Tests de integraciÃ³n (protocolo MCP, token safety, Jira real)",
+                                           "tasks":  [
+                                                         "T042",
+                                                         "T043",
+                                                         "T044"
+                                                     ]
+                                       },
+                       "ci":  {
+                                  "description":  "CI/CD con GitHub Actions",
+                                  "tasks":  [
+                                                "T045"
+                                            ]
+                              },
+                       "docs":  {
+                                    "description":  "README.md y documentaciÃ³n de usuario",
+                                    "tasks":  [
+                                                  "T046"
+                                              ]
+                                },
+                       "quality":  {
+                                       "description":  "Linting, formatting, build verification, audit",
+                                       "tasks":  [
+                                                     "T047",
+                                                     "T048",
+                                                     "T049"
+                                                 ]
+                                   }
+                   },
+    "orderOfExecution":  [
+                             "T001 â†’ Inicializar proyecto (base)",
+                             "T002, T003 â†’ Tipos (paralelo)",
+                             "T004 â†’ Barrel export (depende de T002, T003)",
+                             "T005 â†’ ConfiguraciÃ³n (depende de T004)",
+                             "T006 â†’ Tests de config (depende de T005)",
+                             "T007 â†’ Auth (depende de T004)",
+                             "T008 â†’ Tests de auth (depende de T007)",
+                             "T009, T011, T013 â†’ Utilidades (paralelo, dependen de T004)",
+                             "T010, T012, T014 â†’ Tests de utilidades (paralelo, dependen de T009, T011, T013)",
+                             "T015 â†’ JiraClient (depende de T007, T009, T011, T013, T005)",
+                             "T016 â†’ Tests de JiraClient (depende de T015)",
+                             "T017 â†’ Fixtures (paralelo con schemas)",
+                             "T018-T026 â†’ Schemas Zod (paralelo, dependen de T004)",
+                             "T027 â†’ Tests de schemas (depende de T018-T026)",
+                             "T028-T036 â†’ Tool handlers (paralelo, dependen de T015 + su schema)",
+                             "T037 â†’ Tests de handlers (depende de T028-T036)",
+                             "T038 â†’ Registro centralizado (depende de T028-T036)",
+                             "T039 â†’ Transporte stdio (depende de T001)",
+                             "T040 â†’ Server (depende de T001)",
+                             "T041 â†’ Entry point (depende de T005, T015, T038, T039, T040)",
+                             "T042, T043 â†’ Tests de integraciÃ³n (paralelo, dependen de T041)",
+                             "T044 â†’ Test Jira real (depende de T041, condicional)",
+                             "T045 â†’ CI/CD (depende de T041)",
+                             "T046 â†’ README (depende de T041)",
+                             "T047 â†’ Lint + Format (depende de T045)",
+                             "T048 â†’ Build verification (depende de T041, T047)",
+                             "T049 â†’ Audit (depende de T048)"
+                         ]
 }

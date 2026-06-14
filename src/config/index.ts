@@ -7,7 +7,10 @@ import type { JiraConfig, SanitizedConfig } from '../types/index.js';
 export const EnvSchema = z.object({
   JIRA_HOST: z
     .string()
-    .min(1, 'JIRA_HOST is required. Set it to your Jira Cloud domain (e.g., "my-company.atlassian.net").')
+    .min(
+      1,
+      'JIRA_HOST is required. Set it to your Jira Cloud domain (e.g., "my-company.atlassian.net").',
+    )
     .refine((val) => !val.startsWith('https://') && !val.startsWith('http://'), {
       message:
         'JIRA_HOST must not include protocol (e.g., "my-company.atlassian.net", not "https://...").',
@@ -18,7 +21,10 @@ export const EnvSchema = z.object({
     .email('JIRA_EMAIL must be a valid email address.'),
   JIRA_API_TOKEN: z
     .string()
-    .min(1, 'JIRA_API_TOKEN is required. Generate one at https://id.atlassian.com/manage/api-tokens'),
+    .min(
+      1,
+      'JIRA_API_TOKEN is required. Generate one at https://id.atlassian.com/manage/api-tokens',
+    ),
 });
 
 export type EnvVars = z.infer<typeof EnvSchema>;
