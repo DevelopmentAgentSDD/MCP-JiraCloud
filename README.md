@@ -2,8 +2,8 @@
 
 MCP (Model Context Protocol) server that connects opencode with Jira Cloud, exposing issue tracking, project management, and agile features as structured tools for AI agents.
 
-[![npm version](https://img.shields.io/npm/v/opencode-jira-mcp)](https://www.npmjs.com/package/opencode-jira-mcp)
-[![CI](https://github.com/idsanchezf/opencode-jira-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/idsanchezf/opencode-jira-mcp/actions/workflows/ci.yml)
+[![GitHub Packages](https://img.shields.io/badge/package-github%20packages-blue)](https://github.com/DevelopmentAgentSDD/MCP-JiraCloud/pkgs/npm/opencode-jira-mcp)
+[![CI](https://github.com/DevelopmentAgentSDD/MCP-JiraCloud/actions/workflows/ci.yml/badge.svg)](https://github.com/DevelopmentAgentSDD/MCP-JiraCloud/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -16,23 +16,34 @@ MCP (Model Context Protocol) server that connects opencode with Jira Cloud, expo
 
 ## Installation
 
-### Global install (recommended)
+### 1. Authenticate with GitHub Packages
 
-```bash
-npm install -g opencode-jira-mcp
+Create or edit your `~/.npmrc` file and add:
+
+```ini
+//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
+@DevelopmentAgentSDD:registry=https://npm.pkg.github.com
 ```
 
-### Using npx (no install)
+> **Get a GitHub token** at [Settings → Developer settings → Personal access tokens → Tokens (classic)](https://github.com/settings/tokens) with the `read:packages` scope.
+
+### 2. Global install (recommended)
 
 ```bash
-npx opencode-jira-mcp
+npm install -g @DevelopmentAgentSDD/opencode-jira-mcp
+```
+
+### 3. Using npx (no install)
+
+```bash
+npx @DevelopmentAgentSDD/opencode-jira-mcp
 ```
 
 ### From source
 
 ```bash
-git clone https://github.com/idsanchezf/opencode-jira-mcp.git
-cd opencode-jira-mcp
+git clone https://github.com/DevelopmentAgentSDD/MCP-JiraCloud.git
+cd MCP-JiraCloud
 npm ci
 npm run build
 ```
@@ -56,7 +67,7 @@ Add the server to your `opencode.json` or MCP client configuration:
   "mcpServers": {
     "jira": {
       "command": "npx",
-      "args": ["opencode-jira-mcp"],
+      "args": ["-y", "@DevelopmentAgentSDD/opencode-jira-mcp"],
       "env": {
         "JIRA_HOST": "my-company.atlassian.net",
         "JIRA_EMAIL": "me@my-company.com",
