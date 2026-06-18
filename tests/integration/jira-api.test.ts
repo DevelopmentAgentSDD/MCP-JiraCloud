@@ -224,7 +224,6 @@ describe('Integration: Jira API (fetch-mocked)', () => {
       // Act
       const promise = client.get('/myself');
 
-      // Advance past retry waits
       await vi.advanceTimersByTimeAsync(30000);
       await vi.advanceTimersByTimeAsync(30000);
 
@@ -244,6 +243,8 @@ describe('Integration: Jira API (fetch-mocked)', () => {
 
       // Act
       const promise = client.get('/myself');
+      promise.catch(() => {}); // Previene unhandled rejection con fake timers
+
       await vi.advanceTimersByTimeAsync(30000);
       await vi.advanceTimersByTimeAsync(30000);
       await vi.advanceTimersByTimeAsync(30000);
