@@ -259,7 +259,7 @@ describe('JiraClient', () => {
   });
 
   // =========================================================================
-  // Rate limiting - usa fake timers porque el retryAfter es de 30s minimo
+  // Rate limiting - usa fake timers para evitar esperas reales de 30s
   // =========================================================================
 
   describe('Rate limiting', () => {
@@ -281,9 +281,7 @@ describe('JiraClient', () => {
       const promise = client.get('/myself');
 
       // El 429 tiene retryAfter = 30000 (default de mapHttpError)
-      // Backoff: max(30000, 1*2^0) = 30000
       await vi.advanceTimersByTimeAsync(30000);
-      // Segundo 429: max(30000, 1*2^1) = 30000
       await vi.advanceTimersByTimeAsync(30000);
 
       const response = await promise;
@@ -301,13 +299,13 @@ describe('JiraClient', () => {
 
       // Act
       const promise = client.get('/myself');
+      promise.catch(() => {}); // Previene unhandled rejection con fake timers
 
-      // Avanzar todos los timers
       await vi.advanceTimersByTimeAsync(30000); // retry 1
       await vi.advanceTimersByTimeAsync(30000); // retry 2
       await vi.advanceTimersByTimeAsync(30000); // retry 3
 
-      // Assert - despues de 4 intentos, withRetry tira el ultimo error
+      // Assert - despues de 4 intentos, withRetry rechaza con el ultimo error
       await expect(promise).rejects.toThrow();
       expect(fetchSpy).toHaveBeenCalledTimes(4);
     });
