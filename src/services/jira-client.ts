@@ -146,16 +146,6 @@ export class JiraClient {
             throw error;
           }
 
-          // Propagar el throw de rate limit (429) de mapHttpError para withRetry
-          if (
-            error &&
-            typeof error === 'object' &&
-            'status' in error &&
-            (error as Record<string, unknown>).status === 429
-          ) {
-            throw error;
-          }
-
           // Error de red
           const cause = error instanceof Error ? error.message : 'Unknown network error';
           throw new NetworkError(this.config.host, cause);

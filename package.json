@@ -1,6 +1,6 @@
 {
   "name": "opencode-jira-mcp",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "MCP Server that exposes Jira Cloud API as tools for opencode AI agent",
   "type": "module",
   "main": "./dist/index.js",
@@ -19,6 +19,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:contract": "vitest run tests/contract/",
     "lint": "eslint src/ tests/",
     "lint:fix": "eslint --fix src/ tests/",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
@@ -27,26 +28,42 @@
     "prepare": "npm run build",
     "prepublishOnly": "npm test && npm run lint && npm run build"
   },
-  "keywords": ["mcp", "jira", "atlassian", "opencode", "ai-agent"],
+  "keywords": [
+    "mcp",
+    "jira",
+    "atlassian",
+    "opencode",
+    "model-context-protocol",
+    "ai-agent"
+  ],
   "license": "MIT",
-  "author": "",
+  "author": "Israel David Sanchez Franco <idsanchezf@outlook.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DevelopmentAgentSDD/MCP-JiraCloud.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DevelopmentAgentSDD/MCP-JiraCloud/issues"
+  },
+  "homepage": "https://github.com/DevelopmentAgentSDD/MCP-JiraCloud#readme",
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "zod": "^3.24.0",
     "pino": "^9.0.0",
-    "pino-pretty": "^11.0.0"
+    "pino-pretty": "^11.0.0",
+    "zod": "^3.24.0"
   },
   "devDependencies": {
-    "typescript": "^5.5.0",
     "@types/node": "^22.0.0",
-    "vitest": "^2.0.0",
+    "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^9.0.0",
-    "typescript-eslint": "^8.0.0",
+    "nock": "^13.5.0",
     "prettier": "^3.3.0",
     "tsx": "^4.19.0",
-    "nock": "^13.5.0"
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^4.1.9"
   }
 }

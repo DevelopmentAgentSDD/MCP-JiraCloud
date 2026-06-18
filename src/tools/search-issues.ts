@@ -94,6 +94,25 @@ interface JiraSearchRawResponse {
 // ── JQL Builder ─────────────────────────────────────────────────────────────
 
 /**
+ * Escapes special characters in a JQL string value.
+ * Prevents JQL injection when interpolating user-supplied values into queries.
+ *
+ * Characters escaped:
+ *   - Backslash `\` → `\\`
+ *   - Double quote `"` → `\"`
+ *   - Single quote `'` → `\'`
+ *
+ * The returned value is wrapped in double quotes for use in JQL clauses.
+ */
+function escapeJqlString(value: string): string {
+  const escaped = value
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/'/g, "\\'");
+  return `"${escaped}"`;
+}
+
+/**
  * Construye una query JQL a partir de los parámetros estructurados.
  */
 function buildJql(input: SearchIssuesInput): string {
@@ -101,9 +120,9 @@ function buildJql(input: SearchIssuesInput): string {
 
   const clauses: string[] = [];
 
-  if (input.projectKey) clauses.push(`project = "${input.projectKey}"`);
-  if (input.issueType) clauses.push(`issuetype = "${input.issueType}"`);
-  if (input.status) clauses.push(`status = "${input.status}"`);
+  if (input.projectKey) clauses.push(`project = ${escapeJqlString(input.projectKey)}`);
+  if (input.issueType) clauses.push(`issuetype = ${escapeJqlString(input.issueType)}`);
+  if (input.status) clauses.push(`status = ${escapeJqlString(input.status)}`);
 
   if (input.assignee) {
     if (input.assignee === 'unassigned') {
@@ -111,20 +130,20 @@ function buildJql(input: SearchIssuesInput): string {
     } else if (input.assignee === 'currentUser()') {
       clauses.push('assignee = currentUser()');
     } else {
-      clauses.push(`assignee = "${input.assignee}"`);
+      clauses.push(`assignee = ${escapeJqlString(input.assignee)}`);
     }
   }
 
-  if (input.priority) clauses.push(`priority = "${input.priority}"`);
+  if (input.priority) clauses.push(`priority = ${escapeJqlString(input.priority)}`);
 
   if (input.labels && input.labels.length > 0) {
     for (const label of input.labels) {
-      clauses.push(`labels = "${label}"`);
+      clauses.push(`labels = ${escapeJqlString(label)}`);
     }
   }
 
-  if (input.sprint) clauses.push(`sprint = "${input.sprint}"`);
-  if (input.text) clauses.push(`text ~ "${input.text}"`);
+  if (input.sprint) clauses.push(`sprint = ${escapeJqlString(input.sprint)}`);
+  if (input.text) clauses.push(`text ~ ${escapeJqlString(input.text)}`);
 
   let jql = clauses.join(' AND ') || 'created >= -30d';
 

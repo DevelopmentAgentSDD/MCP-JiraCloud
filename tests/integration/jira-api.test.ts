@@ -301,7 +301,7 @@ describe('Integration: Jira API (fetch-mocked)', () => {
       );
 
       // Act
-      const response = await client.get<{ values: Array<{ id: number }> }>(
+      const response = await client.get<{ values: { id: number }[] }>(
         '/board',
         { name: 'PROJ Scrum Board' },
         { useAgileApi: true },

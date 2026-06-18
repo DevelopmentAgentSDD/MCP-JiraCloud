@@ -9,18 +9,18 @@
     "packageManager": "npm"
   },
   "createdAt": "2026-06-13T00:00:00Z",
-  "updatedAt": "2026-06-13T20:30:00Z",
+  "updatedAt": "2026-06-17T00:00:00Z",
   "humanInTheLoop": true,
-  "currentPhase": "test",
+  "currentPhase": "deploy",
   "phases": {
     "analysis":   { "status": "completed", "approved": true, "startedAt": "2026-06-13T00:00:00Z", "completedAt": "2026-06-13T00:00:00Z", "approvedAt": "2026-06-13T00:00:00Z" },
     "architect":  { "status": "completed", "approved": true, "startedAt": "2026-06-13T00:00:00Z", "completedAt": "2026-06-13T14:28:00Z", "approvedAt": "2026-06-13T14:35:00Z" },
     "design":     { "status": "completed", "approved": true, "startedAt": "2026-06-13T14:35:00Z", "completedAt": "2026-06-13T19:52:19Z", "approvedAt": "2026-06-13T19:52:19Z" },
     "scaffold":   { "status": "completed",  "approved": true, "startedAt": "2026-06-13T19:52:19Z", "completedAt": "2026-06-13T20:10:00Z", "approvedAt": "2026-06-13T20:10:00Z" },
     "develop":    { "status": "completed", "approved": true, "startedAt": "2026-06-13T20:10:00Z", "completedAt": "2026-06-13T20:30:00Z", "approvedAt": "2026-06-13T20:30:00Z" },
-    "test":       { "status": "in_progress", "approved": false, "startedAt": "2026-06-13T20:30:00Z" },
-    "quality":    { "status": "pending", "approved": false },
-    "deploy":     { "status": "pending", "approved": false }
+    "test":       { "status": "completed", "approved": true, "startedAt": "2026-06-13T20:30:00Z", "completedAt": "2026-06-13T22:20:00Z", "approvedAt": "2026-06-13T22:20:00Z" },
+    "quality":    { "status": "completed", "approved": true, "startedAt": "2026-06-13T22:25:00Z", "completedAt": "2026-06-17T00:00:00Z", "approvedAt": "2026-06-17T00:00:00Z" },
+    "deploy":     { "status": "in_progress", "approved": true, "startedAt": "2026-06-17T00:00:00Z", "approvedAt": "2026-06-17T00:00:00Z" }
   },
   "features": [
     {
@@ -28,13 +28,15 @@
       "name": "mcp-jira-server",
       "slug": "mcp-jira-server",
       "description": "MCP Server para Jira Cloud - MVP v1.0.0 con 9 tools, transporte stdio, autenticacion Basic Auth, rate limiting y token safety.",
-      "status": "in_progress",
+      "status": "done",
       "phase": "develop",
       "assignedTo": "develop",
       "docsPath": "docs/features/F001-mcp-jira-server/",
       "createdAt": "2026-06-13T20:10:00Z",
       "startedAt": "2026-06-13T20:10:00Z",
-      "branch": "feature/F001-mcp-jira-server"
+      "completedAt": "2026-06-13T20:30:00Z",
+      "branch": "feature/F001-mcp-jira-server",
+      "artifacts": ["src/", "tests/", "docs/", ".github/"]
     }
   ]
 }

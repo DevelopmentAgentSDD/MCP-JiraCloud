@@ -1,4 +1,5 @@
 import type { Logger } from 'pino';
+import { RateLimitError } from './errors.js';
 
 /**
  * Opciones para la funcion withRetry.
@@ -84,6 +85,10 @@ function calculateBackoff(
  * Retorna null si el error no es un rate limit.
  */
 function extractRetryAfterMs(error: unknown): number | null {
+  if (error instanceof RateLimitError) {
+    return error.retryAfterMs;
+  }
+  // Backward compatibility: plain error objects with status 429
   if (
     error &&
     typeof error === 'object' &&

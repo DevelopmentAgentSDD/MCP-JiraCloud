@@ -82,27 +82,29 @@ describe('Errors', () => {
   });
 
   describe('RateLimitError', () => {
-    it('should create RateLimitError with retries attempted info', () => {
+    it('should create RateLimitError with retryAfterMs info', () => {
       // Arrange
-      const retriesAttempted = 3;
+      const retryAfterMs = 30000;
 
       // Act
-      const error = new RateLimitError(retriesAttempted);
+      const error = new RateLimitError(retryAfterMs);
 
       // Assert
       expect(error).toBeInstanceOf(McpError);
       expect(error.name).toBe('RateLimitError');
       expect(error.code).toBe(ErrorCodes.SERVER_ERROR);
       expect(error.message).toContain('rate limit exceeded');
-      expect(error.message).toContain('3 retries');
+      expect(error.message).toContain('30s');
+      expect(error.retryAfterMs).toBe(retryAfterMs);
     });
 
-    it('should include retry count in message', () => {
+    it('should include retry wait time in seconds in message', () => {
       // Act
-      const error = new RateLimitError(1);
+      const error = new RateLimitError(60000);
 
       // Assert
-      expect(error.message).toContain('1 retries');
+      expect(error.message).toContain('60s');
+      expect(error.retryAfterMs).toBe(60000);
     });
   });
 
@@ -203,13 +205,14 @@ describe('Errors', () => {
       expect(error.message).toContain('/rest/api/3/issue/BAD-1');
     });
 
-    it('should throw special object on 429 for retry handler', () => {
-      // Act & Assert - mapHttpError does NOT return an error for 429, it throws
-      expect(() => mapHttpError(429, {}, '/rest/api/3/search')).toThrow();
+    it('should throw RateLimitError on 429 for retry handler', () => {
+      // Act & Assert - mapHttpError throws RateLimitError for 429
+      expect(() => mapHttpError(429, {}, '/rest/api/3/search')).toThrow(RateLimitError);
       try {
         mapHttpError(429, {}, '/rest/api/3/search');
       } catch (err) {
-        expect(err).toEqual({ status: 429, retryAfter: 30000 });
+        expect(err).toBeInstanceOf(RateLimitError);
+        expect((err as RateLimitError).retryAfterMs).toBeGreaterThan(0);
       }
     });
 

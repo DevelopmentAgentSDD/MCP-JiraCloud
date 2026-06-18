@@ -52,16 +52,22 @@ export class JiraAuthError extends McpError {
   }
 }
 
+/** Conversion factor: milliseconds per second. */
+export const MS_PER_SECOND = 1000;
+
 /**
  * Error de rate limit excedido.
  */
 export class RateLimitError extends McpError {
-  constructor(retriesAttempted: number) {
+  public readonly retryAfterMs: number;
+
+  constructor(retryAfterMs: number) {
     super(
       ErrorCodes.SERVER_ERROR,
-      `Jira API rate limit exceeded after ${retriesAttempted} retries. Please wait and try again later.`,
+      `Jira API rate limit exceeded. Please wait ${retryAfterMs / MS_PER_SECOND}s and try again.`,
     );
     this.name = 'RateLimitError';
+    this.retryAfterMs = retryAfterMs;
   }
 }
 
@@ -85,7 +91,7 @@ export class TimeoutError extends McpError {
   constructor(endpoint: string, timeoutMs: number) {
     super(
       ErrorCodes.SERVER_ERROR,
-      `Request to Jira API (${endpoint}) timed out after ${timeoutMs / 1000} seconds.`,
+      `Request to Jira API (${endpoint}) timed out after ${timeoutMs / MS_PER_SECOND} seconds.`,
     );
     this.name = 'TimeoutError';
   }
@@ -117,7 +123,7 @@ export function mapHttpError(
         `Resource not found at ${path}. Verify the identifier exists and you have access.`,
       );
     case 429:
-      throw { status, retryAfter: extractRetryAfter(body) };
+      throw new RateLimitError(extractRetryAfter(body));
     default:
       if (status >= 500) {
         return new McpError(

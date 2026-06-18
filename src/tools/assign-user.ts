@@ -83,7 +83,7 @@ export function createAssignUserHandler(jiraClient: JiraClient) {
     const output: AssignUserOutput = {
       key: issueKey,
       assignee: {
-        accountId: assignee.accountId ?? input.accountId!,
+        accountId: assignee.accountId ?? input.accountId ?? '',
         displayName: assignee.displayName ?? 'Unknown',
         emailAddress: assignee.emailAddress,
       },

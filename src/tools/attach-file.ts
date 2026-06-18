@@ -4,9 +4,12 @@ import { resolve, isAbsolute, basename } from 'path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { JiraClient } from '../services/jira-client.js';
 
+/** Maximum file size for Jira Cloud attachments (10 MB). */
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
 /**
  * Schema de entrada para la tool "attach_file".
- * Valida que el archivo exista, sea legible y no exceda 10 MB.
+ * Valida que el archivo exista, sea legible y no exceda {@link MAX_FILE_SIZE_BYTES}.
  */
 export const AttachFileInputSchema = z
   .object({
@@ -21,7 +24,7 @@ export const AttachFileInputSchema = z
           if (!existsSync(absolutePath)) return false;
           const stats = statSync(absolutePath);
           if (!stats.isFile()) return false;
-          if (stats.size > 10 * 1024 * 1024) return false;
+          if (stats.size > MAX_FILE_SIZE_BYTES) return false;
           return true;
         },
         {
@@ -144,7 +147,11 @@ export function createAttachFileHandler(jiraClient: JiraClient) {
 
     // Jira returns an array of attachments (usually one)
     const attachments = Array.isArray(response.data) ? response.data : [response.data];
-    const attachment = attachments[0]!;
+    const firstAttachment = attachments[0];
+    if (!firstAttachment) {
+      throw new Error('No attachment returned from Jira API');
+    }
+    const attachment = firstAttachment;
 
     const output: AttachFileOutput = {
       issueKey: input.issueKey,
@@ -179,7 +186,7 @@ export function registerAttachFile(server: McpServer, jiraClient: JiraClient): v
 
   server.tool(
     'attach_file',
-    'Attach a local file to a Jira issue. Provide the issue key and the absolute or relative path to the file on the local filesystem. The file must exist and be readable. Maximum file size is 10 MB (Jira Cloud limit). Common file types are supported: images, PDFs, documents, logs. Returns attachment metadata including filename, size, MIME type, and URL.',
+    `Attach a local file to a Jira issue. Provide the issue key and the absolute or relative path to the file on the local filesystem. The file must exist and be readable. Maximum file size is ${MAX_FILE_SIZE_BYTES / (1024 * 1024)} MB (Jira Cloud limit). Common file types are supported: images, PDFs, documents, logs. Returns attachment metadata including filename, size, MIME type, and URL.`,
     AttachFileInputSchema.shape,
     handler,
   );

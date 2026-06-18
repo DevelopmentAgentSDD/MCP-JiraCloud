@@ -45,7 +45,7 @@ async function main(): Promise<void> {
     // 4. Crear McpServer
     const server = new McpServer({
       name: 'opencode-jira-mcp',
-      version: '0.1.0',
+      version: '1.0.0',
     });
 
     // 5. Registrar todas las tools

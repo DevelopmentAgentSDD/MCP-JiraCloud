@@ -112,7 +112,7 @@ async function resolveTransitionId(
       t.toStatus.toLowerCase() === transitionName.toLowerCase(),
   );
 
-  if (matches.length === 1) return matches[0]!;
+  if (matches.length === 1) return matches[0] ?? null;
   return null; // None or ambiguous
 }
 
