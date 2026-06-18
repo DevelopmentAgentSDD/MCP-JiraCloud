@@ -54,4 +54,10 @@ jobs:
           cache: 'npm'
 
       - run: npm ci
-      - run: npm audit --audit-level=high
+
+      - name: Production dependencies audit (strict)
+        run: npm audit --omit=dev
+
+      - name: Dev dependencies audit (informative)
+        continue-on-error: true
+        run: npm audit
