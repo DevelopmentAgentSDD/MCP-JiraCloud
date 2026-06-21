@@ -58,9 +58,31 @@ The server requires **three environment variables**:
 | `JIRA_EMAIL` | Email address of your Atlassian account |
 | `JIRA_API_TOKEN` | API token generated at [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens) |
 
-### Configuring in opencode.json
+### Configuring in opencode
 
-Add the server to your `opencode.json` or MCP client configuration:
+Add the server to your `opencode.json`:
+
+```json
+{
+  "mcp": {
+    "jira": {
+      "type": "local",
+      "command": ["npx", "-y", "@DevelopmentAgentSDD/opencode-jira-mcp"],
+      "env": {
+        "JIRA_HOST": "my-company.atlassian.net",
+        "JIRA_EMAIL": "me@my-company.com",
+        "JIRA_API_TOKEN": "your-api-token-here"
+      }
+    }
+  }
+}
+```
+
+> **Security tip:** avoid hardcoding the token. Use `{env:JIRA_API_TOKEN}` interpolation so opencode reads it from the environment at runtime.
+
+### Configuring in Claude Desktop
+
+Add to `claude_desktop_config.json`:
 
 ```json
 {
